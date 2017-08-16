@@ -2,6 +2,8 @@
 
 these are mostly useful from a devtestlab automated run of interactive tests
 
+Not really designed to be used as an artifact repository as you'll get best use out of editing them and adding them to the template manually
+
 ## windows-changescreenresolution
 
 adds the [changescreenresolution.exe](https://github.com/mikedouglasdev/changescreenresolution) tool to set the resolution to 1080p when the test agent logs in
