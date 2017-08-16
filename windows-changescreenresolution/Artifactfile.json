@@ -1,0 +1,16 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Azure/azure-devtestlab/master/schemas/2016-11-28/dtlArtifacts.json",
+    "title": "ChangeScreenResolution",
+    "publisher": "andrewiankidd",
+    "description": "Adds ChangeScreenResolution to the startup directory of the VM (for CodedUI), boots the VM in 1080p - credit to Mike Douglas @ Deliveron",
+    "tags": [
+        "Windows",
+        "CSR",
+        "ChangeScreenResolution"
+    ],
+    "iconUri": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2012.svg",
+    "targetOsType": "Windows",
+    "runCommand": {
+        "commandToExecute": "[concat('powershell.exe -ExecutionPolicy bypass \"& ./addStartupItems.ps1 ', '\"')]"
+    }
+}
