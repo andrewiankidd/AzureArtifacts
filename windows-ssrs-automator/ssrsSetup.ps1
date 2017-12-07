@@ -50,6 +50,16 @@ Write-Output "--------------------------------"
 $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") "$DatabaseServer"
 write-output "Instance Name: $($sqlServer.Name)"
 write-output "Instance Version: $($sqlServer.Version)"
+$versionMajor = $(($sqlServer.Version).ToString().Split('.',2)[0]);
+
+if ([int]$versionMajor -ge 14 -and !(Test-Path("$env:temp\SQLServerReportingServices.exe")))
+{
+    write-output "SQL Server 2017 and up does not come bundled with SSRS. Downloading SSRS Installer..."
+    $url = "https://download.microsoft.com/download/E/6/4/E6477A2A-9B58-40F7-8AD6-62BB8491EA78/SQLServerReportingServices.exe"
+    Invoke-WebRequest $url -OutFile "$env:temp\SQLServerReportingServices.exe" -UseBasicParsing
+    Write-Output "Installing SSRS";
+    Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
+}
 
 Write-Output "--------------------------------"
 Write-Output "Enable Mixed mode authentication"
@@ -98,11 +108,10 @@ Write-Output "Enable SSRS"
 Write-Output "--------------------------------"
 Write-Output "Getting WMI object..."
 $wmiName = (Get-WmiObject -namespace root\Microsoft\SqlServer\ReportServer  -class __Namespace).Name
-$rsConfig = Get-WmiObject -namespace "root\Microsoft\SqlServer\ReportServer\$wmiName\v$(($sqlServer.Version).ToString().Split('.',2)[0])\Admin" -class MSReportServer_ConfigurationSetting -filter "InstanceName='$DatabaseInstance'"
+$rsConfig = Get-WmiObject -namespace "root\Microsoft\SqlServer\ReportServer\$wmiName\v$versionMajor\Admin" -class MSReportServer_ConfigurationSetting
 
 Write-Output "Setting Database Connection..."
-#$rsConfig.SetDatabaseConnection($DatabaseServer, "master", 2, $adminUser, $adminPass) | out-null
-
+$rsConfig.SetDatabaseConnection($DatabaseServer, "master", 2, $adminUser, $adminPass) | out-null
 
 # URL Bindings
 $length = $rsConfig.ListReservedURLs().Length;
@@ -154,7 +163,6 @@ Write-Output "Setting URL(s)..."
 # SQL 2014 and newer expect 'ReportServerWebApp'
 # SQL 2012 and lower expect 'ReportManager'
 # https://docs.microsoft.com/en-us/sql/reporting-services/breaking-changes-in-sql-server-reporting-services-in-sql-server-2016
-$versionMajor = $(($sqlServer.Version).ToString().Split('.',2)[0]);
 if ([int]$versionMajor -ge 12)
 {
     $vDirectories = @{
@@ -184,11 +192,25 @@ foreach ($kv in $vDirectories.GetEnumerator())
     $rsConfig.CreateSSLCertificateBinding($key, $certHash, "0.0.0.0", $sslPort, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR CreateSSLCertificateBinding: FAIL: $($_.Error)" } else{ Write-Output "CreateSSLCertificateBinding: OK"; }}
 }
 
+if ($majorVersion = 14)
+{
+    $vString = "SQLServer2017"
+}elseif ($majorVersion = 13)
+{
+    $vString = "SQLServer2016"
+}elseif ($majorVersion = 12)
+{
+    $vString = "SQLServer2014"
+}
+elseif ($majorVersion = 11)
+{
+    $vString = "SQLServer2012"
+}
+
 
 Write-Output "Setting RSS Database..."
 Install-Module -Name ReportingServicesTools -Force
-set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType "ServiceAccount" -Confirm:$false
-
+set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType "ServiceAccount" -Confirm:$false -ReportServerVersion $vString -ReportServerInstance ($wmiName.Replace('RS_', ''))
 Write-Output "Restarting SSRS service..."
 $rsconfig.SetServiceState($false, $false, $false) | Out-Null
 $rsconfig.SetServiceState($true, $true, $true) | Out-Null
