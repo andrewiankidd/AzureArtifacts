@@ -192,17 +192,17 @@ foreach ($kv in $vDirectories.GetEnumerator())
     $rsConfig.CreateSSLCertificateBinding($key, $certHash, "0.0.0.0", $sslPort, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR CreateSSLCertificateBinding: FAIL: $($_.Error)" } else{ Write-Output "CreateSSLCertificateBinding: OK"; }}
 }
 
-if ($majorVersion = 14)
+if ($majorVersion -eq 14)
 {
     $vString = "SQLServer2017"
-}elseif ($majorVersion = 13)
+}elseif ($majorVersion -eq 13)
 {
     $vString = "SQLServer2016"
-}elseif ($majorVersion = 12)
+}elseif ($majorVersion -eq 12)
 {
     $vString = "SQLServer2014"
 }
-elseif ($majorVersion = 11)
+elseif ($majorVersion -eq 11)
 {
     $vString = "SQLServer2012"
 }
