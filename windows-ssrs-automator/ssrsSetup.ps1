@@ -97,8 +97,8 @@ Write-Output "--------------------------------"
 Write-Output "Enable SSRS"
 Write-Output "--------------------------------"
 Write-Output "Getting WMI object..."
-$wmiName = (Get-WmiObject –namespace root\Microsoft\SqlServer\ReportServer  –class __Namespace).Name
-$rsConfig = Get-WmiObject –namespace "root\Microsoft\SqlServer\ReportServer\$wmiName\v$(($sqlServer.Version).ToString().Split('.',2)[0])\Admin" -class MSReportServer_ConfigurationSetting -filter "InstanceName='$DatabaseInstance'"
+$wmiName = (Get-WmiObject -namespace root\Microsoft\SqlServer\ReportServer  -class __Namespace).Name
+$rsConfig = Get-WmiObject -namespace "root\Microsoft\SqlServer\ReportServer\$wmiName\v$(($sqlServer.Version).ToString().Split('.',2)[0])\Admin" -class MSReportServer_ConfigurationSetting -filter "InstanceName='$DatabaseInstance'"
 
 Write-Output "Setting Database Connection..."
 #$rsConfig.SetDatabaseConnection($DatabaseServer, "master", 2, $adminUser, $adminPass) | out-null
