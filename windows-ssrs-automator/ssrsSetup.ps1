@@ -74,6 +74,9 @@ else{
     write-output "New Login Mode: $($sqlServer.Settings.LoginMode)"
 }
 
+# Save Changes
+$sqlServer.Alter()
+
 Write-Output "--------------------------------"
 Write-Output "Add/Update sql user(s)"
 Write-Output "--------------------------------"
@@ -81,7 +84,7 @@ if (!$sqlServer.Logins.Item('sa') -and $sqlServer.Logins.Item($adminUser))
 {
     write-output "$adminUser already exists."
 }
-elseif ($sqlServer.Logins.Item('sa')){
+elseif ($sqlServer.Logins.Item('sa') -ne $null){
     write-output "Enabling 'sa' user"
     $sqlServer.Logins.Item('sa').Enable()
     write-output "Renaming 'sa' user"
@@ -90,8 +93,13 @@ elseif ($sqlServer.Logins.Item('sa')){
     $sqlServer.Logins.Item($adminUser).ChangePassword($adminPass)
 }
 elseif (!$sqlServer.Logins.Item('sa')){
-    write-error "ERR: sa user not found...."
+    write-error "ERR: 'sa' user not found, attempting to add new user"
+    $Login = New-Object -TypeName Microsoft.SqlServer.Management.Smo.Login -ArgumentList $adminPass, $adminUser
+    $Login.LoginType = 'SqlLogin'
 }
+
+# Save Changes
+$sqlServer.Alter()
 
 # Trust Cert
 Write-Output "--------------------------------"
