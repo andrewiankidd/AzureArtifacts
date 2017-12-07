@@ -50,7 +50,7 @@ Write-Output "--------------------------------"
 $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") "$DatabaseServer"
 write-output "Instance Name: $($sqlServer.Name)"
 write-output "Instance Version: $($sqlServer.Version)"
-$versionMajor = $(($sqlServer.Version).ToString().Split('.',2)[0]);
+$versionMajor = $sqlServer.VersionMajor
 
 if ([int]$versionMajor -ge 14 -and !(Test-Path("$env:temp\SQLServerReportingServices.exe")))
 {
@@ -192,25 +192,9 @@ foreach ($kv in $vDirectories.GetEnumerator())
     $rsConfig.CreateSSLCertificateBinding($key, $certHash, "0.0.0.0", $sslPort, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR CreateSSLCertificateBinding: FAIL: $($_.Error)" } else{ Write-Output "CreateSSLCertificateBinding: OK"; }}
 }
 
-if ($majorVersion -eq 14)
-{
-    $vString = "SQLServer2017"
-}elseif ($majorVersion -eq 13)
-{
-    $vString = "SQLServer2016"
-}elseif ($majorVersion -eq 12)
-{
-    $vString = "SQLServer2014"
-}
-elseif ($majorVersion -eq 11)
-{
-    $vString = "SQLServer2012"
-}
-
-
 Write-Output "Setting RSS Database..."
 Install-Module -Name ReportingServicesTools -Force
-set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType "ServiceAccount" -Confirm:$false -ReportServerVersion $vString -ReportServerInstance ($wmiName.Replace('RS_', ''))
+set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType "ServiceAccount" -Confirm:$false -ReportServerVersion $majorVersion -ReportServerInstance ($rsConfig.InstanceName)
 Write-Output "Restarting SSRS service..."
 $rsconfig.SetServiceState($false, $false, $false) | Out-Null
 $rsconfig.SetServiceState($true, $true, $true) | Out-Null
