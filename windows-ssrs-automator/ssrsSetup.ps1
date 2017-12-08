@@ -75,7 +75,17 @@ else{
 }
 
 # Save Changes
-$sqlServer.Alter()
+try {
+    $sqlServer.Alter()
+}
+catch
+{
+    Write-Error $ErrorMessage = $_.Exception.Message
+    Write-Error $_.Exception.StackTrace
+    Write-Error $_.Exception.InnerException.StackTrace
+    Write-Error $_.StackTrace
+    exit;
+}
 
 Write-Output "--------------------------------"
 Write-Output "Add/Update sql user(s)"
@@ -85,12 +95,24 @@ if (!$sqlServer.Logins.Item('sa') -and $sqlServer.Logins.Item($adminUser))
     write-output "$adminUser already exists."
 }
 elseif ($sqlServer.Logins.Item('sa') -ne $null){
-    write-output "Enabling 'sa' user"
-    $sqlServer.Logins.Item('sa').Enable()
-    write-output "Renaming 'sa' user"
-    $sqlServer.Logins.Item('sa').Rename($adminUser)
-    write-output "Setting 'sa' user password"
-    $sqlServer.Logins.Item($adminUser).ChangePassword($adminPass)
+    try
+    {
+        write-output "Enabling 'sa' user"
+        $sqlServer.Logins.Item('sa').Enable()
+        write-output "Renaming 'sa' user"
+        $sqlServer.Logins.Item('sa').Rename($adminUser)
+        write-output "Setting 'sa' user password"
+        $sqlServer.Logins.Item($adminUser).ChangePassword($adminPass)
+    }
+    catch
+    {
+        Write-Error $ErrorMessage = $_.Exception.Message
+        Write-Error $_.Exception.StackTrace
+        Write-Error $_.Exception.InnerException.StackTrace
+        Write-Error $_.StackTrace
+        exit;
+    }
+    
 }
 elseif (!$sqlServer.Logins.Item('sa')){
     write-error "ERR: 'sa' user not found, attempting to add new user"
