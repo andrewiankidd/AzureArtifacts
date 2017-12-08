@@ -80,7 +80,7 @@ try {
 }
 catch
 {
-    Write-Error $ErrorMessage = $_.Exception.Message
+    Write-Error $_.Exception.Message
     Write-Error $_.Exception.StackTrace
     Write-Error $_.Exception.InnerException.StackTrace
     Write-Error $_.StackTrace
@@ -106,7 +106,7 @@ elseif ($sqlServer.Logins.Item('sa') -ne $null){
     }
     catch
     {
-        Write-Error $ErrorMessage = $_.Exception.Message
+        Write-Error $_.Exception.Message
         Write-Error $_.Exception.StackTrace
         Write-Error $_.Exception.InnerException.StackTrace
         Write-Error $_.StackTrace
