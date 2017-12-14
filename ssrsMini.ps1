@@ -139,11 +139,13 @@ Write-Output "Adding $adminUser to dbcreator"
 $query = "EXEC master..sp_addsrvrolemember @loginame = N'$adminUser', @rolename = N'dbcreator'";
 Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
 
+Write-Output "Generating RSS Database..."
+$rsWmiObject = New-RsConfigurationSettingObjectHelper
+$result = $rsWmiObject.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)
+$query = $result.Script
 Write-Output "Setting RSS Database..."
-Install-Module -Name ReportingServicesTools -Force
-Write-Output "set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType SQL -DatabaseCredential $dbCred -Confirm:$false -ReportServerVersion $versionMajor -ReportServerInstance $($rsConfig.InstanceName)"
-set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType "SQL" -DatabaseCredential $dbCred -Confirm:$false -ReportServerVersion $versionMajor -ReportServerInstance ($rsConfig.InstanceName)
-#Write-Output "Setting Database Connection..."
+Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
+
 
 Write-Output "Restarting SSRS service..."
 $rsconfig.SetServiceState($false, $false, $false) | Out-Null
