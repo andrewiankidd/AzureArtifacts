@@ -135,6 +135,10 @@ foreach ($kv in $vDirectories.GetEnumerator())
 $secpasswd = ConvertTo-SecureString "$adminUser" -AsPlainText -Force
 $dbCred = New-Object System.Management.Automation.PSCredential ("$adminPassword", $secpasswd)
 
+Write-Output "Adding $adminUser to dbcreator"
+$svrole = $sqlServer.Roles["dbcreator"];
+$svrole.AddMember("$adminUser")
+
 Write-Output "Setting RSS Database..."
 Install-Module -Name ReportingServicesTools -Force
 Write-Output "set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType SQL -DatabaseCredential $dbCred -Confirm:$false -ReportServerVersion $versionMajor -ReportServerInstance $($rsConfig.InstanceName)"
