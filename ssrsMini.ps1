@@ -153,3 +153,6 @@ if(!$sqlServer.Databases["ReportServer"])
     $rsconfig.SetServiceState($false, $false, $false) | Out-Null
     $rsconfig.SetServiceState($true, $true, $true) | Out-Null
 }
+else{
+    Write-Output "Reporting already set up"
+}
