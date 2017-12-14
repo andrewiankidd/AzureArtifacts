@@ -136,8 +136,8 @@ $secpasswd = ConvertTo-SecureString "$adminUser" -AsPlainText -Force
 $dbCred = New-Object System.Management.Automation.PSCredential ("$adminPassword", $secpasswd)
 
 Write-Output "Adding $adminUser to dbcreator"
-$svrole = $sqlServer.Roles["dbcreator"];
-$svrole.AddMember("$adminUser")
+$query = "EXEC master..sp_addsrvrolemember @loginame = N'$adminUser', @rolename = N'dbcreator'";
+Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
 
 Write-Output "Setting RSS Database..."
 Install-Module -Name ReportingServicesTools -Force
