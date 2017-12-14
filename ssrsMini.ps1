@@ -132,10 +132,13 @@ foreach ($kv in $vDirectories.GetEnumerator())
     $rsConfig.CreateSSLCertificateBinding($key, $certHash, "0.0.0.0", $sslPort, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR CreateSSLCertificateBinding: FAIL: $($_.Error)" } else{ Write-Output "CreateSSLCertificateBinding: OK"; }}
 }
 
+$secpasswd = ConvertTo-SecureString "$adminUser" -AsPlainText -Force
+$dbCred = New-Object System.Management.Automation.PSCredential ("$adminPassword", $secpasswd)
+
 Write-Output "Setting RSS Database..."
 Install-Module -Name ReportingServicesTools -Force
-Write-Output "set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType ServiceAccount -Confirm:$false -ReportServerVersion $versionMajor -ReportServerInstance $($rsConfig.InstanceName)"
-set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType "ServiceAccount" -Confirm:$false -ReportServerVersion $versionMajor -ReportServerInstance ($rsConfig.InstanceName)
+Write-Output "set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType SQL -DatabaseCredential $dbCred -Confirm:$false -ReportServerVersion $versionMajor -ReportServerInstance $($rsConfig.InstanceName)"
+set-rsdatabase -DatabaseServerName ./ -Name ReportServerDB -DatabaseCredentialType "SQL" -DatabaseCredential $dbCred -Confirm:$false -ReportServerVersion $versionMajor -ReportServerInstance ($rsConfig.InstanceName)
 #Write-Output "Setting Database Connection..."
 
 Write-Output "Restarting SSRS service..."
