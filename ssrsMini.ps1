@@ -136,7 +136,7 @@ if(!$sqlServer.Databases["ReportServer"] -Or (1 -eq 1)) #debug
     Write-Output "Writing RSS Database..."
     Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
     Write-Output "Setting RSS Database..."
-    $rsConfig.SetDatabaseConnection(".", "ReportServer", 1, $adminUser, $adminPass) | out-null
+    $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
     
     Write-Output "Opening firewall ports..."
     netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
