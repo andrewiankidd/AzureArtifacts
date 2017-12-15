@@ -136,6 +136,10 @@ if(!$sqlServer.Databases["ReportServer"])
     $query = $result.Script
     Write-Output "Setting RSS Database..."
     Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
+    
+    Write-Output "Opening firewall ports..."
+    netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
+    netsh advfirewall firewall add rule name="SSRS HTTPS" dir=in action=allow protocol=TCP localport=443
 
     Write-Output "Restarting SSRS service..."
     $rsconfig.SetServiceState($false, $false, $false) | Out-Null
