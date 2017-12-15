@@ -134,8 +134,10 @@ if(!$sqlServer.Databases["ReportServer"])
     $rsWmiObject = New-RsConfigurationSettingObjectHelper
     $result = $rsWmiObject.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)
     $query = $result.Script
-    Write-Output "Setting RSS Database..."
+    Write-Output "Writing RSS Database..."
     Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
+    Write-Output "Setting RSS Database..."
+    $rsConfig.SetDatabaseConnection(".", "ReportServer", 1, $adminUser, $adminPass) | out-null
     
     Write-Output "Opening firewall ports..."
     netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
