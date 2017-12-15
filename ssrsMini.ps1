@@ -131,8 +131,7 @@ if(!$sqlServer.Databases["ReportServer"])
     Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
 
     Write-Output "Generating RSS Database..."
-    $rsWmiObject = New-RsConfigurationSettingObjectHelper
-    $result = $rsWmiObject.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)
+    $result = $rsConfig.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)
     $query = $result.Script
     Write-Output "Writing RSS Database..."
     Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
@@ -144,8 +143,8 @@ if(!$sqlServer.Databases["ReportServer"])
     netsh advfirewall firewall add rule name="SSRS HTTPS" dir=in action=allow protocol=TCP localport=443
 
     Write-Output "Restarting SSRS service..."
-    $rsconfig.SetServiceState($false, $false, $false) | Out-Null
-    $rsconfig.SetServiceState($true, $true, $true) | Out-Null
+    $rsConfig.SetServiceState($false, $false, $false) | Out-Null
+    $rsConfig.SetServiceState($true, $true, $true) | Out-Null
 }
 else{
     Write-Output "Reporting already set up"
