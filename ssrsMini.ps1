@@ -12,7 +12,7 @@ write-output "Instance Name: $($sqlServer.Name)"
 write-output "Instance Version: $($sqlServer.Version)"
 Write-Output "Version Major: $versionMajor"
 
-if(!$sqlServer.Databases["ReportServer"])
+if(!$sqlServer.Databases["ReportServer"] -Or (1 -eq 1)) #debug
 {
     Write-Output "--------------------------------"
     Write-Output "SSL Setup"
