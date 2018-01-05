@@ -153,6 +153,7 @@ if(!$sqlServer.Databases["ReportServer"])
     Write-Output "Restarting SSRS service..."
     $rsConfig.SetServiceState($false, $false, $false) | Out-Null
     $rsConfig.SetServiceState($true, $true, $true) | Out-Null
+    Restart-Service -SERVICENAME 'ReportServer'
 }
 else{
     Write-Output "Reporting already set up"
