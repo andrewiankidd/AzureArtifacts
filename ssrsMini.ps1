@@ -52,8 +52,7 @@ if(!$sqlServer.Databases["ReportServer"])
     Write-Output "Enable SSRS"
     Write-Output "--------------------------------"
     Write-Output "Getting WMI object..."
-    $wmiName = (Get-WmiObject -namespace root\Microsoft\SqlServer\ReportServer  -class __Namespace).Name
-    $rsConfig = Get-WmiObject -namespace "root\Microsoft\SqlServer\ReportServer\$wmiName\v14\Admin" -class MSReportServer_ConfigurationSetting
+    $rsConfig = Get-WmiObject -namespace "root\Microsoft\SqlServer\ReportServer\RS_SSRS\v14\Admin" -class MSReportServer_ConfigurationSetting
 
     # URL Bindings
     $length = $rsConfig.ListReservedURLs().Length;
