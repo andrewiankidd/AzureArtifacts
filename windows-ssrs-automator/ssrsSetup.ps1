@@ -42,16 +42,6 @@ Write-Output "Version Major: $versionMajor"
 
 if(!$sqlServer.Databases["ReportServer"])
 {
-	Write-Output "--------------------------------"
-	Write-Output "SSRS Initialization"
-	Write-Output "--------------------------------"
-	# Connect to the instance using SMO
-	[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null
-	$sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") "$DatabaseServer"
-	write-output "Instance Name: $($sqlServer.Name)"
-	write-output "Instance Version: $($sqlServer.Version)"
-	$versionMajor = $sqlServer.VersionMajor
-
 	if ([int]$versionMajor -ge 14 -and !(Test-Path("$env:temp\SQLServerReportingServices.exe")))
 	{
 		write-output "SQL Server 2017 and up does not come bundled with SSRS. Downloading SSRS Installer..."
