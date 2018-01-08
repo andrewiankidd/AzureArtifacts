@@ -34,7 +34,6 @@ if(!$sqlServer.Databases["ReportServer"])
     }
     $cert = $cert[0]
     $certhash = ($cert | select -ExpandProperty thumbprint).tolower();
-    $sslPort = 443
     $httpUrl = "http://$($fqdn):80/"
     $sslUrl = "https://$($fqdn):443/"
     $lcid = 1033 # for english
