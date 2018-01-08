@@ -153,7 +153,7 @@ if(!$sqlServer.Databases["ReportServer"])
     $fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
     [regex]$regex = "(<Authentication>)([\s\S]*?)(<\/Authentication>)";
     $m=$regex.Matches([System.IO.File]::ReadAllText($FileLocation));
-    $replace = "<Authentication><AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes></Authentication>";
+    $replace = "<Authentication><AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes><RSWindowsExtendedProtectionLevel>Off</RSWindowsExtendedProtectionLevel><RSWindowsExtendedProtectionScenario>Proxy</RSWindowsExtendedProtectionScenario></Authentication>";
     [System.IO.File]::ReadAllText($FileLocation).replace($m[0], $replace) | Set-Content $FileLocation;
 
     Write-Output "Restarting SSRS service..."
