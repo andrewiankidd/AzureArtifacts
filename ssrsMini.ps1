@@ -148,6 +148,13 @@ if(!$sqlServer.Databases["ReportServer"])
     Write-Output "Opening firewall ports..."
     netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
     netsh advfirewall firewall add rule name="SSRS HTTPS" dir=in action=allow protocol=TCP localport=443
+    
+    Write-Output "Switching to basic auth...";
+    $fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
+    [regex]$regex = "(<Authentication>)([\s\S]*?)(<\/Authentication>)";
+    $m=$regex.Matches([System.IO.File]::ReadAllText($FileLocation));
+    $replace = "<Authentication><AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes></Authentication>";
+    [System.IO.File]::ReadAllText($FileLocation).replace($m[0], $replace) | Set-Content $FileLocation;
 
     Write-Output "Restarting SSRS service..."
     $rsConfig.SetServiceState($false, $false, $false) | Out-Null
