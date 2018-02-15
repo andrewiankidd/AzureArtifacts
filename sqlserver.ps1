@@ -20,21 +20,21 @@ if (!(Test-Path("$env:temp\SQLFULL_x64_ENU_Core.box")))
 {
 	write-output "Downloading SQLServer Core..."
 	$downloadURL = "https://download.microsoft.com/download/4/C/7/4C7D40B9-BCF8-4F8A-9E76-06E9B92FE5AE/ENU/x64/SQLFULL_x64_ENU_Core.box"
-	Invoke-WebRequest $downloadURL -OutFile "$env:temp\SQLFULL_x64_ENU_Core.box" -UseBasicParsing
+	(New-Object System.Net.WebClient).DownloadString($downloadURL, "$env:temp\SQLFULL_x64_ENU_Core.box")
 }
 
 if (!(Test-Path("$env:temp\SQLFULL_x64_ENU_Lang.box")))
 {
 	write-output "Downloading SQLServer Language Files..."
 	$downloadURL = "https://download.microsoft.com/download/4/C/7/4C7D40B9-BCF8-4F8A-9E76-06E9B92FE5AE/ENU/x64/SQLFULL_x64_ENU_Lang.box"
-	Invoke-WebRequest $downloadURL -OutFile "$env:temp\SQLFULL_x64_ENU_Lang.box" -UseBasicParsing
+	(New-Object System.Net.WebClient).DownloadString($downloadURL, "$env:temp\SQLFULL_x64_ENU_Lang.box")
 }
 
 if (!(Test-Path("$env:temp\SQLFULL_x64_ENU_Install.exe")))
 {
 	write-output "Downloading SQLServer Installer..."
 	$downloadURL = "https://download.microsoft.com/download/4/C/7/4C7D40B9-BCF8-4F8A-9E76-06E9B92FE5AE/ENU/x64/SQLFULL_x64_ENU_Install.exe"
-	Invoke-WebRequest $downloadURL -OutFile "$env:temp\SQLFULL_x64_ENU_Install.exe" -UseBasicParsing
+	(New-Object System.Net.WebClient).DownloadString($downloadURL, "$env:temp\SQLFULL_x64_ENU_Install.exe")
 }
 
 Write-Output "Installing SQLServer";
