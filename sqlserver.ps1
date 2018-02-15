@@ -38,7 +38,11 @@ if (!(Test-Path("$env:temp\SQLFULL_x64_ENU_Install.exe")))
 }
 
 Write-Output "Installing SQLServer";
-Start-Process "$env:temp\SQLFULL_x64_ENU_Install.exe" 
+if (!(Test-Path("$env:temp\SQLFULL_x64_ENU\")))
+{
+	Start-Process "$env:temp\SQLFULL_x64_ENU_Install.exe" 
+}
+
 Start-Process "$env:temp\SQLFULL_x64_ENU\SETUP.exe" -ArgumentList "/QS", "/ACTION=install", "/IACCEPTSQLSERVERLICENSETERMS=1", "/FEATURES=SQL,MDS,Tools", "/SQLSYSADMINACCOUNTS=$hostname\$adminUser", "/INSTANCENAME=$hostname\mssqlserver" -Wait
 
 Write-Output "--------------------------------"
