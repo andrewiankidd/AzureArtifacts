@@ -12,7 +12,7 @@ if (!$adminPass)
 }
 
 $hostname = $env:computername;
-
+$webClient = New-Object System.Net.WebClient
 write-output "Downloading SQLServer"
 Write-Output "------------------------------"
 
