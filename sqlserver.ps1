@@ -16,34 +16,34 @@ $webClient = New-Object System.Net.WebClient
 write-output "Downloading SQLServer to $env:temp"
 Write-Output "------------------------------"
 
-if (!(Test-Path("$env:temp\SQLFULL_x64_ENU_Core.box")))
+if (!(Test-Path("C:\Windows\Temp\SQLFULL_x64_ENU_Core.box")))
 {
 	write-output "Downloading SQLServer Core..."
 	$downloadURL = "https://download.microsoft.com/download/4/C/7/4C7D40B9-BCF8-4F8A-9E76-06E9B92FE5AE/ENU/x64/SQLFULL_x64_ENU_Core.box"
-	$webClient.DownloadFile($downloadURL, "$env:temp\SQLFULL_x64_ENU_Core.box")
+	$webClient.DownloadFile($downloadURL, "C:\Windows\Temp\SQLFULL_x64_ENU_Core.box")
 }
 
-if (!(Test-Path("$env:temp\SQLFULL_x64_ENU_Lang.box")))
+if (!(Test-Path("C:\Windows\Temp\SQLFULL_x64_ENU_Lang.box")))
 {
 	write-output "Downloading SQLServer Language Files..."
 	$downloadURL = "https://download.microsoft.com/download/4/C/7/4C7D40B9-BCF8-4F8A-9E76-06E9B92FE5AE/ENU/x64/SQLFULL_x64_ENU_Lang.box"
-	$webClient.DownloadFile($downloadURL, "$env:temp\SQLFULL_x64_ENU_Lang.box")
+	$webClient.DownloadFile($downloadURL, "C:\Windows\Temp\SQLFULL_x64_ENU_Lang.box")
 }
 
-if (!(Test-Path("$env:temp\SQLFULL_x64_ENU_Install.exe")))
+if (!(Test-Path("C:\Windows\Temp\SQLFULL_x64_ENU_Install.exe")))
 {
 	write-output "Downloading SQLServer Installer..."
 	$downloadURL = "https://download.microsoft.com/download/4/C/7/4C7D40B9-BCF8-4F8A-9E76-06E9B92FE5AE/ENU/x64/SQLFULL_x64_ENU_Install.exe"
-	$webClient.DownloadFile($downloadURL, "$env:temp\SQLFULL_x64_ENU_Install.exe")
+	$webClient.DownloadFile($downloadURL, "C:\Windows\Temp\SQLFULL_x64_ENU_Install.exe")
 }
 
 Write-Output "Installing SQLServer";
-if (!(Test-Path("$env:temp\SQLFULL_x64_ENU\")))
+if (!(Test-Path("C:\Windows\Temp\SQLFULL_x64_ENU\")))
 {
-	Start-Process "$env:temp\SQLFULL_x64_ENU_Install.exe" 
+	Start-Process "C:\Windows\Temp\SQLFULL_x64_ENU_Install.exe" 
 }
 
-Start-Process "$env:temp\SQLFULL_x64_ENU\SETUP.exe" -ArgumentList "/Q", "/ACTION=install", "/IACCEPTSQLSERVERLICENSETERMS=1", "/FEATURES=SQL,MDS,Tools", "/SQLSYSADMINACCOUNTS=$hostname\$adminUser", "/INSTANCENAME=$hostname\mssqlserver" -Wait
+Start-Process "C:\Windows\Temp\SQLFULL_x64_ENU\SETUP.exe" -ArgumentList "/Q", "/ACTION=install", "/IACCEPTSQLSERVERLICENSETERMS=1", "/FEATURES=SQL,MDS,Tools", "/SQLSYSADMINACCOUNTS=$hostname\$adminUser", "/INSTANCENAME=$hostname\mssqlserver" -Wait
 
 Write-Output "--------------------------------"
 Write-Output "AMCS SQL Setup"
