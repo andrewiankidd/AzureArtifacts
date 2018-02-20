@@ -37,7 +37,7 @@ else{
 $javax64install = "http://javadl.oracle.com/webapps/download/AutoDL?BundleId=230542_2f38c3b165be4555a1fa6e98c45e0808";
 $javax64 = "$env:temp\java.exe";
 $Logfile = "$env:temp\install_java_$(get-date -format `"yyyyMMdd_hhmmsstt`").log"
-If (!(Test-Path($javax64)))
+If (!(Test-Path($javax64)) -or 1 -eq 1)
 {
     Write-Output "Downloading $javax64install"
     $start_time = Get-Date;
@@ -45,7 +45,7 @@ If (!(Test-Path($javax64)))
     Write-Output "Time taken: $((Get-Date).Subtract($start_time).Seconds) second(s)";
     
     # Install Java
-    Write-Output "Installing Java"
+    Write-Output "Installing $javax64"
     $start_time = Get-Date;
     $javax64install = Start-Process -FilePath $javax64 -ArgumentList "/s INSTALL_SILENT=1 STATIC=0 AUTO_UPDATE=0 WEB_JAVA=1 WEB_JAVA_SECURITY_LEVEL=H WEB_ANALYTICS=0 EULA=0 REBOOT=0 NOSTARTMENU=0 SPONSORS=0 /L $Logfile" -Wait -Verbose -PassThru
 	Start-Sleep -s 35
