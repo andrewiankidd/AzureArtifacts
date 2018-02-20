@@ -21,18 +21,6 @@ $outpath = "$env:temp\"
 #     don't edit beneath this line     #
 ########################################
 
-# Stop ElasticSearch Service (if it exists)
-if (Test-Path $targetDir\ElasticSearch\bin\elasticsearch-service.bat)
-{
-    Write-Output "`"$targetDir\ElasticSearch\bin\elasticsearch-service.bat`" stop"
-    & cmd /c "`"$targetDir\ElasticSearch\bin\elasticsearch-service.bat`" stop"
-    #& cmd /c "TASKKILL /f /im java.exe"
-    #Start-Sleep -s 10
-}
-else{
-    Write-Output "`"$targetDir\ElasticSearch\bin\elasticsearch-service.bat`" does not exist!"
-}
-
 # Download Java http://www.weirdwindowsfixes.com/2017/05/powershell-download-and-install-java.html
 $javax64install = "http://javadl.oracle.com/webapps/download/AutoDL?BundleId=230542_2f38c3b165be4555a1fa6e98c45e0808";
 $javax64 = "$env:temp\java.exe";
@@ -56,10 +44,35 @@ If (!(Test-Path "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment"))
 	else {
 		Write-Error "Java 64 bit installer exited with exit code $($javax64install.ExitCode)";
 	}
-    Write-Output "Reloading PATH";
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") 
+   
 }
 
+Write-Output "Reloading PATH";
+$RegistrySearchPaths = @('HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment\', 'HKLM:\SOFTWARE\Wow6432Node\JavaSoft\Java Runtime Environment\')
+$JAVAHOME = $RegistrySearchPaths |
+    where { Test-Path $_ } | % {
+        $VersionKey = Join-Path $_ (Get-ItemProperty $_).CurrentVersion;
+        $JavaHomeBasedPath = Join-Path (Get-ItemProperty $VersionKey).JavaHome $JavaExeSuffix
+        if (Test-Path $JavaHomeBasedPath) { $JavaHomeBasedPath }
+    } | select -First 1;
+
+Write-Output "$env:JAVA_HOME=$JAVAHOME"
+#$env:JAVA_HOME=$JAVAHOME
+Write-Output "setx /M JAVA_HOME $JAVAHOME"
+& cmd.exe /c "setx /M JAVA_HOME `"$JAVAHOME\`""
+
+
+# Stop ElasticSearch Service (if it exists)
+if (Test-Path $targetDir\ElasticSearch\bin\elasticsearch-service.bat)
+{
+    Write-Output "`"$targetDir\ElasticSearch\bin\elasticsearch-service.bat`" stop"
+    & cmd /c "`"$targetDir\ElasticSearch\bin\elasticsearch-service.bat`" stop"
+    #& cmd /c "TASKKILL /f /im java.exe"
+    #Start-Sleep -s 10
+}
+else{
+    Write-Output "`"$targetDir\ElasticSearch\bin\elasticsearch-service.bat`" does not exist!"
+}
 
 # Download ElasticSearch
 Write-Output "------------------------------------------"
