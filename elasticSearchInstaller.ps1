@@ -47,7 +47,7 @@ If (!(Test-Path($javax64)) -or 1 -eq 1)
     # Install Java
     Write-Output "Installing $javax64"
     $start_time = Get-Date;
-    $javax64install = Start-Process -FilePath $javax64 -ArgumentList "/s INSTALL_SILENT=1 STATIC=0 AUTO_UPDATE=0 WEB_JAVA=1 WEB_JAVA_SECURITY_LEVEL=H WEB_ANALYTICS=0 EULA=0 REBOOT=0 NOSTARTMENU=0 SPONSORS=0 /L $Logfile" -Wait -Verbose -PassThru
+    $javax64install = Start-Process -FilePath "$javax64" -ArgumentList "/s INSTALL_SILENT=1 STATIC=0 AUTO_UPDATE=0 WEB_JAVA=1 WEB_JAVA_SECURITY_LEVEL=H WEB_ANALYTICS=0 EULA=0 REBOOT=0 NOSTARTMENU=0 SPONSORS=0 /L $Logfile" -Wait -Verbose -PassThru
 	Start-Sleep -s 35
 	Write-Output "Time taken: $((Get-Date).Subtract($start_time).Seconds) second(s)";
 	if ($javax64install.ExitCode -eq 0) {
