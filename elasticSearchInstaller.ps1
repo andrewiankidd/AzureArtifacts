@@ -12,7 +12,7 @@ Write-Output "ScriptDir: $scriptDir";
 Write-Output "BuildTools: $buildTools";
 
 # Initialize
-$version = "elasticsearch-5.6.2"
+$version = "elasticsearch-6.2.1"
 $url = "https://artifacts.elastic.co/downloads/elasticsearch/$version.zip"
 $output = "$env:temp\elasticsearch.zip"
 $outpath = "$env:temp\"
