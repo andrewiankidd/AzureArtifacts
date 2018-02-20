@@ -146,8 +146,8 @@ if (!$fqdn){
     }
 }
 try{
-    Write-Output "Calling http://$fqdn/ElasticSync/syncrequests..."
-    Invoke-WebRequest -Uri http://$fqdn/ElasticSync/syncrequests -Method POST -Body $POSTparams -ContentType "application/json"
+    Write-Output "Calling http://$fqdn/syncrequests..."
+    Invoke-WebRequest -Uri http://$fqdn/syncrequests -Method POST -Body $POSTparams -ContentType "application/json"
 }
 catch
 {
