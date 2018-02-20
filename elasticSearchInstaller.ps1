@@ -37,7 +37,7 @@ else{
 $javax64install = "http://javadl.oracle.com/webapps/download/AutoDL?BundleId=230542_2f38c3b165be4555a1fa6e98c45e0808";
 $javax64 = "$env:temp\java.exe";
 $Logfile = "$env:temp\install_java_$(get-date -format `"yyyyMMdd_hhmmsstt`").log"
-If (!(Test-Path($javax64)) -or 1 -eq 1)
+If (!(Test-Path "HKLM:\SOFTWARE\JavaSoft\Java Runtime Environment"))
 {
     Write-Output "Downloading $javax64install"
     $start_time = Get-Date;
@@ -56,7 +56,10 @@ If (!(Test-Path($javax64)) -or 1 -eq 1)
 	else {
 		Write-Error "Java 64 bit installer exited with exit code $($javax64install.ExitCode)";
 	}
+    Write-Output "Reloading PATH";
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") 
 }
+
 
 # Download ElasticSearch
 Write-Output "------------------------------------------"
