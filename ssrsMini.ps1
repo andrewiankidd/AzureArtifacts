@@ -8,6 +8,8 @@ Write-Output "--------------------------------"
 [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null
 $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") "."
 $versionMajor = $sqlServer.VersionMajor
+write-output "fqdn: $($fqdn)"
+write-output "fqdn: $($adminUser)"
 write-output "Instance Name: $($sqlServer.Name)"
 write-output "Instance Version: $($sqlServer.Version)"
 Write-Output "Version Major: $versionMajor"
