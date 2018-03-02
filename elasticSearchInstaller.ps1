@@ -65,10 +65,9 @@ Write-Output "setx /M JAVA_HOME $JAVAHOME"
 # Stop ElasticSearch Service (if it exists)
 if (Test-Path $targetDir\ElasticSearch\bin\elasticsearch-service.bat)
 {
-    Write-Output "`"$targetDir\ElasticSearch\bin\elasticsearch-service.bat`" stop"
-    & cmd /c "`"$targetDir\ElasticSearch\bin\elasticsearch-service.bat`" stop"
-    #& cmd /c "TASKKILL /f /im java.exe"
-    #Start-Sleep -s 10
+    
+    Write-Output "ElasticSearch already installed!"
+    exit;
 }
 else{
     Write-Output "`"$targetDir\ElasticSearch\bin\elasticsearch-service.bat`" does not exist!"
