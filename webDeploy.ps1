@@ -11,21 +11,23 @@ if (!(Test-Path($MSDeployPath)))
 	Start-Process "$env:temp\msdeploy.msi" -ArgumentList '/quiet', '/qn', '/norestart' -Wait
 
 	Write-Output "Enabling WinRM";
-	Enable-PSRemoting –force
-	winrm quickconfig
-
+	$cmd = "winrm quickconfig /y"
+	Write-Output $cmd;
+	Invoke-Expression "$cmd";
+	
 	Write-Output "Generating Thumbprint";
 	$thumbprint = (New-SelfSignedCertificate -certstorelocation cert:\localmachine\my -dnsname $fqdn).Thumbprint
 
 	Write-Output "Creating HTTPS Listener";
 	$cmd = 'winrm create winrm/config/listener?Address=*+Transport=HTTPS `@`{Hostname=`"$fqdn`"`; CertificateThumbprint=`"$thumbprint`"`}'
-
 	Write-Output $cmd;
-	Invoke-Expression $cmd
+	Invoke-Expression "$cmd";
 	
-	Write-Output "Adding firewall rule"
-	netsh advfirewall firewall add rule name="winRM HTTPS" dir=in action=allow protocol=TCP localport=5986
+	Write-Output "Adding firewall rule";
+	$cmd = "netsh advfirewall firewall add rule name=`"winRM HTTPS`" dir=in action=allow protocol=TCP localport=5986"
+	Write-Output $cmd;
+	Invoke-Expression "$cmd";
 }
 else{
-  Write-Output "MSDeploy already installed."
+  Write-Output "MSDeploy already installed";
 }
