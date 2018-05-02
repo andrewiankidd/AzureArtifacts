@@ -11,7 +11,7 @@ if (!(Test-Path($MSDeployPath)))
 	Start-Process "$env:temp\msdeploy.msi" -ArgumentList '/quiet', '/qn', '/norestart' -Wait
 
 	Write-Output "Enabling WinRM";
-	$cmd = "winrm quickconfig /y"
+	$cmd = "winrm quickconfig -quiet"
 	Write-Output $cmd;
 	Invoke-Expression "$cmd";
 	
