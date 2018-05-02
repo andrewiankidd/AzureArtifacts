@@ -11,6 +11,7 @@ if (!(Test-Path($MSDeployPath)))
 	Start-Process "$env:temp\msdeploy.msi" -ArgumentList '/quiet', '/qn', '/norestart' -Wait
 
 	Write-Output "Enabling WinRM";
+	Enable-PSRemoting –force
 	winrm quickconfig
 
 	Write-Output "Generating Thumbprint";
