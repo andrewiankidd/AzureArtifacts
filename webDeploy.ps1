@@ -10,17 +10,19 @@ if (!(Test-Path($MSDeployPath)))
 	Write-Output "Installing MSDeploy";
 	Start-Process "$env:temp\msdeploy.msi" -ArgumentList '/quiet', '/qn', '/norestart' -Wait
 
-	##enable winrm
+	Write-Output "Enabling WinRM";
 	winrm quickconfig
 
-	#get thumbprint
+	Write-Output "Generating Thumbprint";
 	$thumbprint = (New-SelfSignedCertificate -certstorelocation cert:\localmachine\my -dnsname $fqdn).Thumbprint
 
-	#create cert
-	Write-Host fqdn: $fqdn, thumbprint: $thumbprint
+	Write-Output "Creating HTTPS Listener";
 	$cmd = 'winrm create winrm/config/listener?Address=*+Transport=HTTPS `@`{Hostname=`"$fqdn`"`; CertificateThumbprint=`"$thumbprint`"`}'
 
+	Write-Output $cmd;
 	Invoke-Expression $cmd
+	
+	Write-Output "Adding firewall rule"
 	netsh advfirewall firewall add rule name="winRM HTTPS" dir=in action=allow protocol=TCP localport=5986
 }
 else{
