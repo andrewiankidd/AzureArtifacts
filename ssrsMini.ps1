@@ -1,4 +1,4 @@
-param ($fqdn, $adminUser, $adminPassword)
+param ($fqdn, $adminUser, $adminPassword, $reportUser = $null, $reportPass = $null)
 cls
 
 Write-Output "--------------------------------"
@@ -167,4 +167,16 @@ if(!$sqlServer.Databases["ReportServer"])
 }
 else{
     Write-Output "Reporting already set up"
+}
+
+if ($reportUser -ne $null)
+{
+    # Create local user for SSRS
+    if (!((Get-LocalUser | Where-Object {$_.Name -eq "$reportUser"}).Length -gt 0))
+    {
+        Write-Output "Creating $reportUser";
+        New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force);
+    } else{
+        Write-Output "User $reportUser already exists";
+    }
 }
