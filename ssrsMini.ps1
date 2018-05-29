@@ -185,4 +185,50 @@ if ($reportUser -ne $null)
     } else{
         Write-Output "User $reportUser already exists";
     }
+    
+    # Connect to (localhost) SSRS service
+    Write-Output "New-WebServiceProxy -Uri `"http://$($fqdn)/ReportServer/ReportService2010.asmx?wsdl`" -Credential (New-Object System.Management.Automation.PSCredential (`"$adminUser`", (ConvertTo-SecureString `"$adminPassword`" -AsPlainText -Force)))";
+    $ssrs = New-WebServiceProxy -Uri "http://$($fqdn)/ReportServer/ReportService2010.asmx?wsdl" -Credential (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force)));
+    $namespace = $ssrs.GetType().Namespace;
+    $changesMade = $false;
+    $policies = $null;
+    
+    # Get Root Dir Policies
+    $policies = $ssrs.GetPolicies('/', [ref]$true)
+
+    # Get new local user
+    $reportUser = "$($env:ComputerName)\$($reportUser)"
+
+    # Check if user is already assigned to Policy
+    if (!($policies.GroupUserName -contains "$reportUser"))
+    {
+	$policy = New-Object -TypeName ($namespace + '.Policy');
+	$policy.GroupUserName = $reportUser;
+	$policy.Roles = @();
+	$policies += $policy;
+	$changesMade = $true;
+    }
+
+    $roles = $policy.Roles;
+    $requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder")
+    $requiredRoles | % {
+	if (($roles.Name -contains $_) -eq $false)
+	{
+		#A role for the policy needs to added
+		Write-Output "Policy doesn't contain specified role ($($_)). Adding.";
+		$role = New-Object -TypeName ($namespace + '.Role');
+		$role.Name = $_;
+		$policy.Roles += $role;
+		$changesMade = $true;
+	}
+	else{
+		Write-Output "Policy already contains specified role ($($_)).";
+	}
+    }
+
+    if ($changesMade)
+    {
+	Write-Output "Saving changes to SSRS.";
+	$ssrs.SetPolicies('/', $policies);
+    }
 }
