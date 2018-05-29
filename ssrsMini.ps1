@@ -1,4 +1,4 @@
-param ($fqdn, $adminUser, $adminPassword, $reportUser = $null, $reportPass = $null)
+param ($fqdn, $adminUser, $adminPassword, $reportUser = "reportsdbuser", $reportPass = $null)
 cls
 
 Write-Output "--------------------------------"
@@ -175,7 +175,13 @@ if ($reportUser -ne $null)
     if (!((Get-LocalUser | Where-Object {$_.Name -eq "$reportUser"}).Length -gt 0))
     {
         Write-Output "Creating $reportUser";
-        New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force);
+	if ($reportPass -ne $null)
+	{
+		New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force);
+	}
+        else{
+		New-LocalUser -Name $reportUser -Description "SSRS User" -NoPassword
+	}
     } else{
         Write-Output "User $reportUser already exists";
     }
