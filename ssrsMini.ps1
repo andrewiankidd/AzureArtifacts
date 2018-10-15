@@ -177,6 +177,7 @@ if ($reportUser -ne $null)
         Write-Output "Creating $reportUser";
 	    if ($reportPass -ne $null)
 	    {
+		    write-output "New-LocalUser -Name $reportUser -Description 'SSRS User' -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;"
 		    New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;
 	    }
         else{
