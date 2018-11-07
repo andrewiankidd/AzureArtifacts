@@ -1,5 +1,6 @@
 param ($fqdn, $adminUser, $adminPassword, $reportUser = "reportsdbuser", $reportPass = $null)
 cls
+$ErrorActionPreference = "Stop";
 
 Write-Output "--------------------------------"
 Write-Output "Script Initialization"
