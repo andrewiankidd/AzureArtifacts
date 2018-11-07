@@ -18,14 +18,18 @@ Write-Output "Version Major: $versionMajor"
 
 if(!$sqlServer.Databases["ReportServer"])
 {
-	if (!(Test-Path("$env:temp\SQLServerReportingServices.exe")))
-	{
-		write-output "SQL Server 2017 and up does not come bundled with SSRS. Downloading SSRS Installer..."
-		$url = "https://download.microsoft.com/download/E/6/4/E6477A2A-9B58-40F7-8AD6-62BB8491EA78/SQLServerReportingServices.exe"
-		Invoke-WebRequest $url -OutFile "$env:temp\SQLServerReportingServices.exe" -UseBasicParsing
-		Write-Output "Installing SSRS";
-		Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
-	}
+    if (!(Test-Path("$env:temp\SQLServerReportingServices.exe")))
+    {
+        write-output "SQL Server 2017 and up does not come bundled with SSRS. Downloading SSRS Installer..."
+        $url = "https://download.microsoft.com/download/E/6/4/E6477A2A-9B58-40F7-8AD6-62BB8491EA78/SQLServerReportingServices.exe"
+        Invoke-WebRequest $url -OutFile "$env:temp\SQLServerReportingServices.exe" -UseBasicParsing
+    }
+    
+    if (!(Test-Path("C:\Program Files\SSRS\Shared Tools\")))
+    {
+        Write-Output "Installing SSRS";
+        Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
+    }
 	
     Write-Output "--------------------------------"
     Write-Output "SSL Setup"
