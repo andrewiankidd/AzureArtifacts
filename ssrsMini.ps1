@@ -18,42 +18,21 @@ Write-Output "Version Major: $versionMajor"
 
 if(!$sqlServer.Databases["ReportServer"])
 {
-    if (!(Test-Path("$env:temp\SQLServerReportingServices.exe")))
-    {
-        write-output "SQL Server 2017 and up does not come bundled with SSRS. Downloading SSRS Installer..."
-        $url = "https://download.microsoft.com/download/E/6/4/E6477A2A-9B58-40F7-8AD6-62BB8491EA78/SQLServerReportingServices.exe"
-        Invoke-WebRequest $url -OutFile "$env:temp\SQLServerReportingServices.exe" -UseBasicParsing
-    }
+	if (!(Test-Path("$env:temp\SQLServerReportingServices.exe")))
+	{
+		write-output "SQL Server 2017 and up does not come bundled with SSRS. Downloading SSRS Installer..."
+		$url = "https://download.microsoft.com/download/E/6/4/E6477A2A-9B58-40F7-8AD6-62BB8491EA78/SQLServerReportingServices.exe"
+		Invoke-WebRequest $url -OutFile "$env:temp\SQLServerReportingServices.exe" -UseBasicParsing
+	}
     
     if (!(Test-Path("C:\Program Files\SSRS\Shared Tools\")))
     {
         Write-Output "Installing SSRS";
-        Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
-    }
-	
-    Write-Output "--------------------------------"
-    Write-Output "SSL Setup"
-    Write-Output "--------------------------------"
-    $cert = (Get-ChildItem -path cert:\localmachine\my | Where {$_.subject -contains $env:computername });
-    if (!$cert)
-    {
-        Write-Output "Couldn't find valid SSL Cert, Creating new Self-Signed cert"
-        $cert = (New-SelfSignedCertificate -certstorelocation cert:\localmachine\my -dnsname $fqdn)
-    }
-    $cert = $cert[0]
-    $certhash = ($cert | select -ExpandProperty thumbprint).tolower();
-    $httpUrl = "http://$($fqdn):80/"
-    $sslUrl = "https://$($fqdn):443/"
-    $lcid = 1033 # for english
+		Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
+	}
 
-    # Trust Cert
-    Write-Output "--------------------------------"
-    Write-Output "Adding SSL Cert to trust list..."
-    Write-Output "--------------------------------"
-    $DestStore = New-Object  -TypeName System.Security.Cryptography.X509Certificates.X509Store  -ArgumentList "root", "LocalMachine"
-    $DestStore.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-    $DestStore.Add($cert)
-    $DestStore.Close();
+    $httpUrl = "http://+:80/"
+    $lcid = 1033 # for english
 
     Write-Output "--------------------------------"
     Write-Output "Enable SSRS"
@@ -83,29 +62,6 @@ if(!$sqlServer.Databases["ReportServer"])
         }
     }
 
-    ## SSL Bindings
-    $length = $rsConfig.ListSSLCertificateBindings($lcid).Length;
-    if ($length -gt 0)
-    {
-        Write-Output "Removing Existing Cert Bindings..."
-
-        $rsConfig.ListSSLCertificateBindings($lcid) | ForEach-Object{
-            For ($i=0; $i -lt $length; $i++) {
-                Write-Output "Removing Cert Binding $($_.Application[$i]), $($_.CertificateHash[$i]), $($_.IPAddress[$i]), $($_.Port[$i]), $lcid";
-                $rsConfig.RemoveSSLCertificateBindings($_.Application[$i], $_.CertificateHash[$i], $_.IPAddress[$i], $_.Port[$i], $lcid) | Out-Null
-            }
-        }
-
-        $length = $rsConfig.ListSSLCertificateBindings($lcid).Length
-        Write-Output "Cert Bindings: $length";
-        if ($length -gt 0)
-        {
-            Write-Error "ERR: bindings should be empty:";
-            $rsConfig.ListSSLCertificateBindings($lcid) | ForEach-Object{Write-Output $_}
-            exit;
-        }
-    }
-
     Write-Output "Setting URL(s)..."
     # SQL 2014 and newer expect 'ReportServerWebApp'
     # SQL 2012 and lower expect 'ReportManager'
@@ -130,12 +86,9 @@ if(!$sqlServer.Databases["ReportServer"])
         $value = $kv.Value;
         Write-Output "Processing $key, $value"
         Write-Output "HTTP: $httpUrl"
-        Write-Output "HTTPS: $sslUrl"
 
         $rsConfig.SetVirtualDirectory($key,$value,$lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR SetVirtualDirectory: FAIL: $($_.Error)" } else{ Write-Output "SetVirtualDirectory: OK"; }}
         $rsConfig.ReserveURL($key, "$httpUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveURL: FAIL: $($_.Error)" } else{ Write-Output "ReserveURL: OK"; }}
-        $rsConfig.ReserveURL($key, "$sslUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveHTTPSURL: FAIL: $($_.Error)" } else{ Write-Output "ReserveHTTPSURL: OK"; }}
-        #$rsConfig.CreateSSLCertificateBinding($key, $certHash, "0.0.0.0", $sslPort, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR CreateSSLCertificateBinding: FAIL: $($_.Error)" } else{ Write-Output "CreateSSLCertificateBinding: OK"; }}
     }
 
     $secpasswd = ConvertTo-SecureString "$adminUser" -AsPlainText -Force
@@ -155,7 +108,6 @@ if(!$sqlServer.Databases["ReportServer"])
     
     Write-Output "Opening firewall ports..."
     netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
-    netsh advfirewall firewall add rule name="SSRS HTTPS" dir=in action=allow protocol=TCP localport=443
     
     Write-Output "Switching to basic auth...";
     $fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
@@ -193,8 +145,8 @@ if ($reportUser -ne $null)
     }
     
     # Connect to (localhost) SSRS service
-    Write-Output "New-WebServiceProxy -Uri `"http://$($fqdn)/ReportServer/ReportService2010.asmx?wsdl`" -Credential (New-Object System.Management.Automation.PSCredential (`"$adminUser`", (ConvertTo-SecureString `"$adminPassword`" -AsPlainText -Force)))";
-    $ssrs = New-WebServiceProxy -Uri "http://$($fqdn)/ReportServer/ReportService2010.asmx?wsdl" -Credential (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force)));
+    Write-Output "New-WebServiceProxy -Uri `"http://localhost/ReportServer/ReportService2010.asmx?wsdl`" -Credential (New-Object System.Management.Automation.PSCredential (`"$adminUser`", (ConvertTo-SecureString `"$adminPassword`" -AsPlainText -Force)))";
+    $ssrs = New-WebServiceProxy -Uri "http://localhost/ReportServer/ReportService2010.asmx?wsdl" -Credential (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force)));
     $namespace = $ssrs.GetType().Namespace;
     $changesMade = $false;
     $policies = $null;
