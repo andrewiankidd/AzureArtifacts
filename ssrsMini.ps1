@@ -134,11 +134,17 @@ if (!(Test-Path "C:\windows\Fonts\code128.ttf"))
     $file = "$env:temp\code128.ttf";
     $target = "C:\windows\Fonts\code128.ttf"
 
+    Write-Output "Downloading Font"
     Invoke-WebRequest $url -OutFile $file -UseBasicParsing
 
+    Write-Output "Installing Font"
     copy-item $file $target -Force;
 
+    Write-Output "Registering Font"
     New-ItemProperty -Name $target -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value $File
+}
+else{
+    Write-Output "Font Exists!"
 }
 
 if ($reportUser -ne $null)
