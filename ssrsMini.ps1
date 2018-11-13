@@ -126,6 +126,21 @@ else{
     Write-Output "Reporting already set up"
 }
 
+if (!(Test-Path "C:\windows\Fonts\code128.ttf"))
+{
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+    $url = "http://github.com/andrewiankidd/AzureArtifacts/raw/master/code128.ttf";
+    $file = "$env:temp\code128.ttf";
+    $target = "C:\windows\Fonts\code128.ttf"
+
+    Invoke-WebRequest $url -OutFile $file -UseBasicParsing
+
+    copy-item $file $target -Force;
+
+    New-ItemProperty -Name $target -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value $File
+}
+
 if ($reportUser -ne $null)
 {
     # Create local user for SSRS
