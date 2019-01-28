@@ -166,7 +166,7 @@ if ($reportUser -ne $null)
     }
     
     # Connect to (localhost) SSRS service
-    $ssrs = null;
+    $ssrs = $null;
     $start = Get-Date
     # Try for FIVE minutes
     Write-Output "New-WebServiceProxy -Uri `"http://localhost/ReportServer/ReportService2010.asmx?wsdl`" -Credential (New-Object System.Management.Automation.PSCredential (`"$adminUser`", (ConvertTo-SecureString `"$adminPassword`" -AsPlainText -Force)))";
