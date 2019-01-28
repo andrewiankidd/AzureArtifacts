@@ -171,7 +171,11 @@ if ($reportUser -ne $null)
     # Try for FIVE minutes
     Write-Output "New-WebServiceProxy -Uri `"http://localhost/ReportServer/ReportService2010.asmx?wsdl`" -Credential (New-Object System.Management.Automation.PSCredential (`"$adminUser`", (ConvertTo-SecureString `"$adminPassword`" -AsPlainText -Force)))";
     while ((!$ssrs) -and ((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds -lt 300)) {
+    	Write-Output "$((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds) Trying to connect..."
         $ssrs = New-WebServiceProxy -Uri "http://localhost/ReportServer/ReportService2010.asmx?wsdl" -Credential (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force))) -ErrorAction SilentlyContinue;
+    }
+    if (!$ssrs) {
+    	Write-Error "Could not connect to SSRS"
     }
     
     $namespace = $ssrs.GetType().Namespace;
