@@ -188,8 +188,6 @@ if ($reportUser -ne $null)
     # Get new local user
     $reportUser = "$($env:ComputerName)\$($reportUser)"
 
-    Write-Output "test"
-    write-output $policies.GroupUserName;
     # Check if user is already assigned to Policy
     if (!($policies.GroupUserName -contains "$reportUser"))
     {
