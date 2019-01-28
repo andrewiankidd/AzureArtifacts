@@ -188,36 +188,41 @@ if ($reportUser -ne $null)
     # Get new local user
     $reportUser = "$($env:ComputerName)\$($reportUser)"
 
+    Write-Output "test"
+    write-output $policies.GroupUserName;
     # Check if user is already assigned to Policy
     if (!($policies.GroupUserName -contains "$reportUser"))
     {
-	$policy = New-Object -TypeName ($namespace + '.Policy');
-	$policy.GroupUserName = $reportUser;
-	$policy.Roles = @();
-	$policies += $policy;
-	$changesMade = $true;
+	    $policy = New-Object -TypeName ($namespace + '.Policy');
+	    $policy.GroupUserName = $reportUser;
+	    $policy.Roles = @();
+	    $policies += $policy;
+	    $changesMade = $true;
+    }
+    else{
+        $policy = $policies.Where({$_.GroupUserName.Contains($reportUser)}, 1);
     }
 
     $roles = $policy.Roles;
     $requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder")
     $requiredRoles | % {
-	if (($roles.Name -contains $_) -eq $false)
-	{
-		#A role for the policy needs to added
-		Write-Output "Policy doesn't contain specified role ($($_)). Adding.";
-		$role = New-Object -TypeName ($namespace + '.Role');
-		$role.Name = $_;
-		$policy.Roles += $role;
-		$changesMade = $true;
-	}
-	else{
-		Write-Output "Policy already contains specified role ($($_)).";
-	}
+	    if (($roles.Name -contains $_) -eq $false)
+	    {
+		    #A role for the policy needs to added
+		    Write-Output "Policy doesn't contain specified role ($($_)). Adding.";
+		    $role = New-Object -TypeName ($namespace + '.Role');
+		    $role.Name = $_;
+		    $policy.Roles += $role;
+		    $changesMade = $true;
+	    }
+	    else{
+		    Write-Output "Policy already contains specified role ($($_)).";
+	    }
     }
 
     if ($changesMade)
     {
-	Write-Output "Saving changes to SSRS.";
-	$ssrs.SetPolicies('/', $policies);
+	    Write-Output "Saving changes to SSRS.";
+	    $ssrs.SetPolicies('/', $policies);
     }
 }
