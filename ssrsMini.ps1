@@ -169,7 +169,7 @@ if ($reportUser -ne $null)
     $ssrs = $null;
     $start = Get-Date
     # Try for FIVE minutes
-    Write-Output "New-WebServiceProxy -Uri `"http://localhost/ReportServer/ReportService2010.asmx?wsdl`" -Credential (New-Object System.Management.Automation.PSCredential (`"$adminUser`", (ConvertTo-SecureString `"$adminPassword`" -AsPlainText -Force)))";
+    Write-Output "Attempting to connect to localhost";
     while ((!$ssrs) -and ((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds -lt 300)) {
     	Write-Output "$((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds) Trying to connect..."
         $ssrs = New-WebServiceProxy -Uri "http://localhost/ReportServer/ReportService2010.asmx?wsdl" -Credential (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force))) -ErrorAction SilentlyContinue;
