@@ -93,18 +93,6 @@ if(!$sqlServer.Databases["ReportServer"])
 
     $secpasswd = ConvertTo-SecureString "$adminUser" -AsPlainText -Force
     $dbCred = New-Object System.Management.Automation.PSCredential ("$adminPassword", $secpasswd)
-
-    Write-Output "Adding $adminUser to dbcreator"
-    $query = "EXEC master..sp_addsrvrolemember @loginame = N'$adminUser', @rolename = N'dbcreator'";
-    Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
-
-    Write-Output "Generating RSS Database..."
-    $result = $rsConfig.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)
-    $query = $result.Script
-    Write-Output "Writing RSS Database..."
-    Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
-    Write-Output "Setting RSS Database..."
-    $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
     
     Write-Output "Opening firewall ports..."
     netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
@@ -115,6 +103,18 @@ if(!$sqlServer.Databases["ReportServer"])
     $m=$regex.Matches([System.IO.File]::ReadAllText($FileLocation));
     $replace = "<Authentication><AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes><RSWindowsExtendedProtectionLevel>Off</RSWindowsExtendedProtectionLevel><RSWindowsExtendedProtectionScenario>Proxy</RSWindowsExtendedProtectionScenario></Authentication>";
     [System.IO.File]::ReadAllText($FileLocation).replace($m[0], $replace) | Set-Content $FileLocation;
+    
+     Write-Output "Adding $adminUser to dbcreator"
+    $query = "EXEC master..sp_addsrvrolemember @loginame = N'$adminUser', @rolename = N'dbcreator'";
+    Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
+
+    Write-Output "Generating RSS Database..."
+    $result = $rsConfig.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)
+    $query = $result.Script
+    Write-Output "Writing RSS Database..."
+    Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
+    Write-Output "Setting RSS Database..."
+    $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
 
     Write-Output "Restarting SSRS service..."
     $rsConfig.SetServiceState($false, $false, $false) | Out-Null
