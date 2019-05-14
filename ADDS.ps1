@@ -4,7 +4,7 @@ param(
 	[string]$adminUsername = "devops",
 	
 	[Parameter(Mandatory=$true)]
-	[string]$adminPassword = "",
+	[string]$adminPassword,
 	
 	[Parameter(Mandatory=$false)]
 	[string]$deployIndex = "0",
