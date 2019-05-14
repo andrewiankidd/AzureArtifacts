@@ -55,7 +55,7 @@ if ($deployIndex -eq 1) {
 
 	# Creating Domain/Forest
 	Write-Output "Install-ADDSForest";
-	Install-ADDSForest -DatabasePath "F:\NTDS" -DomainMode "$domainMode" -DomainName "$domainName" -DomainNetbiosName "$netBiosName" -ForestMode "$domainMode" -InstallDns:$true -LogPath "F:\NTDS" -NoRebootOnCompletion:$true -SysvolPath "F:\SYSVOL" -SafeModeAdministratorPassword "$securePassword" -AsPlainText -Force) -Force:$true
+	Install-ADDSForest -DatabasePath "F:\NTDS" -DomainMode "$domainMode" -DomainName "$domainName" -DomainNetbiosName "$netBiosName" -ForestMode "$domainMode" -InstallDns:$true -LogPath "F:\NTDS" -NoRebootOnCompletion:$true -SysvolPath "F:\SYSVOL" -SafeModeAdministratorPassword "$securePassword" -Force:$true
 
 } else {
 
