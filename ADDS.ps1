@@ -1,8 +1,8 @@
 param(
 
-	[string]$adminUser = "devops",
+	[string]$adminUsername = "devops",
 	
-	[string]$adminPass = "",
+	[string]$adminPassword = "",
 	
 	[string]$deployIndex = "0",
 	
@@ -28,7 +28,7 @@ if (!(Test-Path "F:")){
 
 # Create PSCredentials object
 Write-Output "Adding Computer to domain"
-$credStore = New-Object System.Management.Automation.PSCredential($adminUser, ($adminPass | ConvertTo-SecureString -AsPlainText -Force));
+$credStore = New-Object System.Management.Automation.PSCredential($adminUsername, ($adminPassword | ConvertTo-SecureString -AsPlainText -Force));
 
 # Add the missing windows features
 Write-Output "Install-WindowsFeature -name AD-Domain-Services -IncludeManagementTools";
@@ -47,7 +47,7 @@ if ($deployIndex -eq 1) {
 
 	# Creating Domain/Forest
 	Write-Output "Install-ADDSForest";
-	Install-ADDSForest -CreateDnsDelegation:$false -DatabasePath "F:\NTDS" -DomainMode "$domainMode" -DomainName "$domainName" -DomainNetbiosName "$netBiosName" -ForestMode "$domainMode" -InstallDns:$true -LogPath "F:\NTDS" -NoRebootOnCompletion:$true -SysvolPath "F:\SYSVOL" -Force:$true -SafeModeAdministratorPassword ($adminPass | ConvertTo-SecureString -AsPlainText -Force);
+	Install-ADDSForest -CreateDnsDelegation:$false -DatabasePath "F:\NTDS" -DomainMode "$domainMode" -DomainName "$domainName" -DomainNetbiosName "$netBiosName" -ForestMode "$domainMode" -InstallDns:$true -LogPath "F:\NTDS" -NoRebootOnCompletion:$true -SysvolPath "F:\SYSVOL" -Force:$true -SafeModeAdministratorPassword ($adminPassword | ConvertTo-SecureString -AsPlainText -Force);
 
 } else {
 
