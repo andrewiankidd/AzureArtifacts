@@ -1,15 +1,21 @@
 param(
 
+	[Parameter(Mandatory=$false)]
 	[string]$adminUsername = "devops",
 	
+	[Parameter(Mandatory=$true)]
 	[string]$adminPassword = "",
 	
+	[Parameter(Mandatory=$false)]
 	[string]$deployIndex = "0",
 	
+	[Parameter(Mandatory=$false)]
 	[string]$domainName = "amcsplatform.local",
 	
+	[Parameter(Mandatory=$false)]
 	[string]$netBiosName = "AMCSPLATFORM",
 	
+	[Parameter(Mandatory=$false)]
 	[ValidateSet('Win2008', 'Win2008R2', 'Win2012', 'Win2012R2', 'WinThreshold', 'Default')]
 	[string]$domainMode = 'Default'
 )
