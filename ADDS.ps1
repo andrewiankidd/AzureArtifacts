@@ -56,17 +56,25 @@ if ($deployIndex -eq 1) {
 	# Creating Domain/Forest
 	Write-Output "Install-ADDSForest";
 	Install-ADDSForest -DatabasePath "F:\NTDS" -DomainMode "$domainMode" -DomainName "$domainName" -DomainNetbiosName "$netBiosName" -ForestMode "$domainMode" -InstallDns:$true -LogPath "F:\NTDS" -NoRebootOnCompletion:$true -SysvolPath "F:\SYSVOL" -SafeModeAdministratorPassword $securePassword -Force:$true
-
+	Restart-Computer -Force;
 } else {
+	# default to false
+	$joined = $false;
+	
+	# Set up timeout
+	$startTime = (Get-Date);
 
-	# Add machine to the domain group
-	try {
-		Add-Computer -DomainName "$domainName" -Credential $credStore -ErrorAction Stop;
-	} catch {
-		if ($_.Exception.Message.Contains("already in that domain")) {
-			Write-Warning $_.Exception.Message;
-		} else {
-			Write-Error $_.Exception.Message;
+	# Try to add machine to the domain group for 5 minutes
+	while (!$joined -and ( (New-TimeSpan -Start ($startTime) -End (Get-Date)).totalMinutes -lt 5 ) ) {
+		try {
+			Add-Computer -DomainName "$domainName" -Credential $credStore -ErrorAction Stop;
+			$joined = $true;
+		} catch {
+			if ($_.Exception.Message.Contains("already in that domain")) {
+				Write-Verbose $_.Exception.Message;
+			} else {
+				Write-Warning $_.Exception.Message;
+			}
 		}
 	}
 
