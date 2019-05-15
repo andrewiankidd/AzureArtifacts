@@ -65,8 +65,10 @@ if ($deployIndex -eq 1) {
 
 	Write-Output "Adding Computer to domain"
 	# Try to add machine to the domain group for 5 minutes
+	$attempt = 0;
 	while (!$joined -and ( (New-TimeSpan -Start ($startTime) -End (Get-Date)).totalMinutes -lt 5 ) ) {
 		try {
+			Write-Output "Attempt #$($attempt)";
 			Add-Computer -DomainName "$domainName" -Credential $credStore -LocalCredential $credStore -ErrorAction Stop;
 			$joined = $true;
 		} catch {
@@ -76,6 +78,7 @@ if ($deployIndex -eq 1) {
 				Write-Warning $_.Exception.Message;
 			}
 		}
+		$attempt++;
 	}
 	
 	if (!$joined) {
