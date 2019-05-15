@@ -67,7 +67,7 @@ if ($deployIndex -eq 1) {
 	# Try to add machine to the domain group for 5 minutes
 	while (!$joined -and ( (New-TimeSpan -Start ($startTime) -End (Get-Date)).totalMinutes -lt 5 ) ) {
 		try {
-			Add-Computer -DomainName "$domainName" -Credential $credStore -ErrorAction Stop;
+			Add-Computer -DomainName "$domainName" -Credential $credStore -LocalCredential $credStore -ErrorAction Stop;
 			$joined = $true;
 		} catch {
 			if ($_.Exception.Message.Contains("already in that domain")) {
