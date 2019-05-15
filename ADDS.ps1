@@ -36,7 +36,7 @@ if (!(Test-Path "F:")){
 
 # Create PSCredentials object
 $credStore = New-Object System.Management.Automation.PSCredential("$domainName\$adminUsername", $securePassword);
-$localCredStore = New-Object System.Management.Automation.PSCredential("$adminUsername", $securePassword);
+$localCredStore = New-Object System.Management.Automation.PSCredential("eu1-dc-dev-2\$adminUsername", $securePassword);
 
 # Add the missing windows features
 Write-Output "Install-WindowsFeature -name AD-Domain-Services -IncludeManagementTools";
