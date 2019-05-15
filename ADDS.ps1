@@ -73,6 +73,9 @@ if ($deployIndex -eq 1) {
 			Add-Computer -DomainName "$domainName" -Credential $credStore -LocalCredential $credStore -ErrorAction Stop;
 			$joined = $true;
 		} catch {
+			if ($_.Exception.Message.Contains("already in that domain")) {
+				$joined = true;
+			}
 			$lastErr = $_.Exception.Message;
 		}
 		$attempt++;
