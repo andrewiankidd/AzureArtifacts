@@ -19,7 +19,7 @@ param(
 	[ValidateSet('Win2008', 'Win2008R2', 'Win2012', 'Win2012R2', 'WinThreshold', 'Default')]
 	[string]$domainMode = 'Default'
 )
-
+$ErrorActionPreference = "Stop";
 $securePassword = ($adminPassword | ConvertTo-SecureString -AsPlainText -Force);
 
 # Initialize storage drive.
@@ -66,23 +66,21 @@ if ($deployIndex -eq 1) {
 	Write-Output "Adding Computer to domain"
 	# Try to add machine to the domain group for 5 minutes
 	$attempt = 0;
+	$lastErr = "No Last Error recorded";
 	while (!$joined -and ( (New-TimeSpan -Start ($startTime) -End (Get-Date)).totalMinutes -lt 5 ) ) {
 		try {
 			Write-Output "Attempt #$($attempt)";
 			Add-Computer -DomainName "$domainName" -Credential $credStore -LocalCredential $credStore -ErrorAction Stop;
 			$joined = $true;
 		} catch {
-			if ($_.Exception.Message.Contains("already in that domain")) {
-				Write-Verbose $_.Exception.Message;
-			} else {
-				Write-Warning $_.Exception.Message;
-			}
+			$lastErr = $_.Exception.Message;
 		}
 		$attempt++;
 	}
 	
 	if (!$joined) {
-		Write-Error "Failed to join domain."
+		Write-Warning "Failed to join domain."
+		Write-Error $lastErr;
 	}
 
 	# Joining Domain/Forest
