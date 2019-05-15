@@ -36,7 +36,6 @@ if (!(Test-Path "F:")){
 
 # Create PSCredentials object
 $credStore = New-Object System.Management.Automation.PSCredential("$domainName\$adminUsername", $securePassword);
-$localCredStore = New-Object System.Management.Automation.PSCredential("eu1-dc-dev-2\$adminUsername", $securePassword);
 
 # Add the missing windows features
 Write-Output "Install-WindowsFeature -name AD-Domain-Services -IncludeManagementTools";
@@ -97,7 +96,7 @@ if ($deployIndex -eq 1) {
 
 	# Joining Domain/Forest
 	Write-Output "PLEASE Install-ADDSDomainController";
-	Start-Process 'powershell.exe' -Credential $localCredStore -ArgumentList "Install-ADDSDomainController -CreateDnsDelegation:$false -DatabasePath 'F:\NTDS' -DomainName '$domainname' -NoGlobalCatalog:$false -InstallDns:$false -LogPath 'F:\NTDS' -SiteName 'Default-First-Site-Name' -SysvolPath 'F:\SYSVOL' -NoRebootOnCompletion:$true -Credential $credStore -SafeModeAdministratorPassword $securePassword -Force:$true"
+	Install-ADDSDomainController -CreateDnsDelegation:$false -DatabasePath 'F:\NTDS' -DomainName '$domainname' -NoGlobalCatalog:$false -InstallDns:$false -LogPath 'F:\NTDS' -SiteName 'Default-First-Site-Name' -SysvolPath 'F:\SYSVOL' -NoRebootOnCompletion:$true -Credential $credStore -SafeModeAdministratorPassword $securePassword -Force:$true;
 	Restart-Computer -Force;
 }
 
