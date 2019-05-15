@@ -35,7 +35,6 @@ if (!(Test-Path "F:")){
 }
 
 # Create PSCredentials object
-Write-Output "Adding Computer to domain"
 $credStore = New-Object System.Management.Automation.PSCredential("$domainName\$adminUsername", $securePassword);
 
 # Add the missing windows features
@@ -64,6 +63,7 @@ if ($deployIndex -eq 1) {
 	# Set up timeout
 	$startTime = (Get-Date);
 
+	Write-Output "Adding Computer to domain"
 	# Try to add machine to the domain group for 5 minutes
 	while (!$joined -and ( (New-TimeSpan -Start ($startTime) -End (Get-Date)).totalMinutes -lt 5 ) ) {
 		try {
