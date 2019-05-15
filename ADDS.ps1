@@ -88,7 +88,7 @@ if ($deployIndex -eq 1) {
 
 	# Joining Domain/Forest
 	Write-Output "Install-ADDSDomainController";
-	Install-ADDSDomainController -CreateDnsDelegation:$false -DatabasePath "F:\NTDS" -DomainName "$domainname" -NoGlobalCatalog:$false -Credential $credStore -CriticalReplicationOnly:$false -InstallDns:$false -LogPath "F:\NTDS" -NoRebootOnCompletion:$true -SiteName:$netBiosName -SysvolPath "F:\SYSVOL" -SafeModeAdministratorPassword $securePassword -Force:$true
+	Install-ADDSDomainController -CreateDnsDelegation:$false -DatabasePath "F:\NTDS" -DomainName "$domainname" -NoGlobalCatalog:$false -InstallDns:$false -LogPath "F:\NTDS" -SiteName "$netBiosName" -SysvolPath "F:\SYSVOL" -NoRebootOnCompletion:$true -Credential $credStore -SafeModeAdministratorPassword $securePassword -Force:$true
 	Restart-Computer -Force;
 }
 
