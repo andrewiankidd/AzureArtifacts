@@ -70,6 +70,14 @@ if ($deployIndex -eq 1) {
 	while (!$joined -and ( (New-TimeSpan -Start ($startTime) -End (Get-Date)).totalMinutes -lt 5 ) ) {
 		try {
 			Write-Output "Attempt #$($attempt)";
+			
+			# Flush DNS as prep
+			Write-Output "IPCONFIG /FLUSHDNS";
+			& IPCONFIG /FLUSHDNS;
+			
+			Write-Output "NSLOOKUP $domainName";
+			& NSLOOKUP $domainName;
+			
 			Add-Computer -DomainName "$domainName" -Credential $credStore -LocalCredential $credStore -ErrorAction Stop;
 			$joined = $true;
 		} catch {
