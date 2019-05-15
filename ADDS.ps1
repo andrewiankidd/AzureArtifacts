@@ -36,7 +36,7 @@ if (!(Test-Path "F:")){
 
 # Create PSCredentials object
 Write-Output "Adding Computer to domain"
-$credStore = New-Object System.Management.Automation.PSCredential($adminUsername, $securePassword);
+$credStore = New-Object System.Management.Automation.PSCredential("$domainName\$adminUsername", $securePassword);
 
 # Add the missing windows features
 Write-Output "Install-WindowsFeature -name AD-Domain-Services -IncludeManagementTools";
