@@ -74,7 +74,7 @@ if ($deployIndex -eq 1) {
 			$joined = $true;
 		} catch {
 			if ($_.Exception.Message.Contains("already in that domain")) {
-				$joined = true;
+				$joined = $true;
 			}
 			$lastErr = $_.Exception.Message;
 		}
