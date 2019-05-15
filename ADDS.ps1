@@ -77,6 +77,10 @@ if ($deployIndex -eq 1) {
 			}
 		}
 	}
+	
+	if (!$joined) {
+		Write-Error "Failed to join domain."
+	}
 
 	# Joining Domain/Forest
 	Write-Output "Install-ADDSDomainController";
