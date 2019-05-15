@@ -96,7 +96,7 @@ if ($deployIndex -eq 1) {
 	}
 
 	# Joining Domain/Forest
-	Write-Output "Install-ADDSDomainController";
+	Write-Output "PLEASE Install-ADDSDomainController";
 	Start-Process 'powershell.exe' -Credential $localCredStore -ArgumentList "Install-ADDSDomainController -CreateDnsDelegation:$false -DatabasePath 'F:\NTDS' -DomainName '$domainname' -NoGlobalCatalog:$false -InstallDns:$false -LogPath 'F:\NTDS' -SiteName 'Default-First-Site-Name' -SysvolPath 'F:\SYSVOL' -NoRebootOnCompletion:$true -Credential $credStore -SafeModeAdministratorPassword $securePassword -Force:$true"
 	Restart-Computer -Force;
 }
