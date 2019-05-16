@@ -57,3 +57,4 @@ if (!$joined) {
 
 
 Write-Output "Complete."
+Restart-Computer -Force;
