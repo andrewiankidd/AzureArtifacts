@@ -3,7 +3,7 @@ param(
 	[string]$adminPassword,
 	
 	[Parameter(Mandatory=$false)]
-	[string]$domainName = "amcsplatform.local",
+	[string]$domainName = "amcsplatform.local"
 )
 
 # Stop script on error
