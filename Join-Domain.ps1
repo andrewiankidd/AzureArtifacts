@@ -1,4 +1,7 @@
 param(
+	[Parameter(Mandatory=$false)]
+	[string]$adminUsername = "devops",
+	
 	[Parameter(Mandatory=$true)]
 	[string]$adminPassword,
 	
