@@ -1,13 +1,15 @@
 param (
     [string]$fqdn,
 
-    [string]$adminUser = "devops",
+    [string]$adminUser = "amcs\akidd",
 
-    [string]$adminPassword,
+    [string]$adminPassword = "FeckThis93",
 
-    [string]$reportUser ="reportsdbuser",
+    [string]$reportUser ="test123",
 
-    [string]$reportPass,
+    [string]$reportPass = "2,sTOCK,gROUP!",
+
+    [string]$reportPath = "/",
 
     [string]$httpUrl = "http://+:80",
 
@@ -224,7 +226,7 @@ if (1 -eq 2) {
     
     # Get Root Dir Policies
     writeOutput "Retreiving existing server Policies...";
-    $policies = $ssrs.GetPolicies('/', [ref]$true)
+    $policies = $ssrs.GetPolicies($reportPath, [ref]$true)
 
     # Get new local user
     $reportUser = "$($env:ComputerName)\$($reportUser)"
@@ -247,7 +249,7 @@ if (1 -eq 2) {
     }
 
     $roles = $policy.Roles;
-    $requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder")
+    $requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder");
     $requiredRoles | % {
 	    if (($roles.Name -contains $_) -eq $false)
 	    {
@@ -266,7 +268,7 @@ if (1 -eq 2) {
     if ($changesMade)
     {
 	    writeOutput "Saving changes to SSRS.";
-	    $ssrs.SetPolicies('/', $policies);
+	    $ssrs.SetPolicies($reportPath, $policies);
     }
 
 }
