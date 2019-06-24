@@ -1,203 +1,248 @@
-param ($fqdn, $adminUser, $adminPassword, $reportUser = "reportsdbuser", $reportPass = $null)
+param (
+    [string]$fqdn,
+
+    [string]$adminUser = "devops",
+
+    [string]$adminPassword,
+
+    [string]$reportUser ="reportsdbuser",
+
+    [string]$reportPass,
+
+    [string]$httpUrl = "http://+:80",
+
+    [string]$lcid = "1033"
+)
+
+
+
+function writeTitle($text) {
+     Write-Output "`r`n----------------------------------------------------------------`r`n$($text)`r`n----------------------------------------------------------------"
+}
+
+function writeOutput($text) {
+    Write-Output "> $($text)"
+}
+
 cls
 $ErrorActionPreference = "Stop";
 
-Write-Output "--------------------------------"
-Write-Output "Script Initialization"
-Write-Output "--------------------------------"
+
 # Connect to the instance using SMO
-[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null
-$sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") "."
-$versionMajor = $sqlServer.VersionMajor
-write-output "fqdn: $($fqdn)"
-write-output "adminUser: $($adminUser)"
-write-output "adminPassword: $($adminPassword)"
-write-output "Instance Name: $($sqlServer.Name)"
-write-output "Instance Version: $($sqlServer.Version)"
-Write-Output "Version Major: $versionMajor"
+[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
+$sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
+$versionMajor = $sqlServer.VersionMajor;
 
-if(!$sqlServer.Databases["ReportServer"])
+
+# print some handy vars
+writeTitle -text "Script Initialization";
+writeOutput "fqdn: $($fqdn)";
+writeOutput "adminUser: $($adminUser)";;
+writeOutput "adminPassword: $($adminPassword)"
+writeOutput "Instance Name: $($sqlServer.Name)";
+writeOutput "Instance Version: $($sqlServer.Version)";
+writeOutput "Version Major: $versionMajor";
+
+
+# Check for SSRS2017
+writeTitle -text "SSRS2017 Installation";
+if (Test-Path("C:\Program Files\SSRS\Shared Tools\")) {
+
+    writeOutput "SSRS 2017 already installed!";
+
+} else {
+    # download
+    writeOutput "Downloading SSRS Installer..."
+	Invoke-WebRequest "https://download.microsoft.com/download/E/6/4/E6477A2A-9B58-40F7-8AD6-62BB8491EA78/SQLServerReportingServices.exe" -OutFile "$env:temp\SQLServerReportingServices.exe" -UseBasicParsing;
+
+    # install
+    writeOutput "Installing SSRS...";
+	Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
+}
+
+# Configure the SSRS intallation
+writeTitle -text "Connecting to SSRS ReportService";
+writeOutput "Getting WMI object..."
+$rsConfig = Get-WmiObject -namespace "root\Microsoft\SqlServer\ReportServer\RS_SSRS\v14\Admin" -class MSReportServer_ConfigurationSetting
+
+
+# Check for ReportServer database
+writeTitle -text "SSRS2017 ReportServer Database";
+if($sqlServer.Databases["ReportServer"]) {
+
+    # done
+    writeOutput "ReportServer Database already exists!";
+
+} else {
+
+    writeOutput "Adding $adminUser to dbcreator"
+    $query = "EXEC master..sp_addsrvrolemember @loginame = N'$adminUser', @rolename = N'dbcreator'";
+    Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
+
+    # create database
+    writeOutput "Generating ReportServer Database...";
+    $GenerateDatabaseCreationScript = ($rsConfig.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)).Script;
+
+    writeOutput "Writing ReportServer Database..."
+    Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript -U $adminUser -P $adminPassword;
+
+    writeOutput "Setting RSS Database..."
+    $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
+}
+
+# Check for ReportServer database
+writeTitle -text "ReportServer Firewall Port";
+if((& netsh advfirewall firewall show rule name="SSRS HTTP") | ?{$_.Contains("Allow")}){
+
+     # done
+    writeOutput "ReportServer Firewall Port already exists!";
+
+} else {
+
+    # add firewall rule for ssrs
+    writeOutput "Creating ReportServer Firewall Port..."
+    netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
+}
+
+# Check for ReportServer BarCode font
+writeTitle -text "Barcode Font Installation";
+if (Test-Path "C:\windows\Fonts\code128.ttf")
 {
-	if (!(Test-Path("$env:temp\SQLServerReportingServices.exe")))
-	{
-		write-output "SQL Server 2017 and up does not come bundled with SSRS. Downloading SSRS Installer..."
-		$url = "https://download.microsoft.com/download/E/6/4/E6477A2A-9B58-40F7-8AD6-62BB8491EA78/SQLServerReportingServices.exe"
-		Invoke-WebRequest $url -OutFile "$env:temp\SQLServerReportingServices.exe" -UseBasicParsing
-	}
+   writeOutput "Font Exists!"
+}
+else{
     
-    if (!(Test-Path("C:\Program Files\SSRS\Shared Tools\")))
-    {
-        Write-Output "Installing SSRS";
-		Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
-	}
+    $url = "http://github.com/andrewiankidd/AzureArtifacts/raw/master/code128.ttf";
+    $file = "$env:temp\code128.ttf";
+    $target = "C:\windows\Fonts\code128.ttf";
 
-    $httpUrl = "http://+:80/"
-    $lcid = 1033 # for english
+    writeOutput "Downloading Font";
+    Invoke-WebRequest $url -OutFile $file -UseBasicParsing;
 
-    Write-Output "--------------------------------"
-    Write-Output "Enable SSRS"
-    Write-Output "--------------------------------"
-    Write-Output "Getting WMI object..."
-    $rsConfig = Get-WmiObject -namespace "root\Microsoft\SqlServer\ReportServer\RS_SSRS\v14\Admin" -class MSReportServer_ConfigurationSetting
+    writeOutput "Installing Font";
+    copy-item $file $target -Force;
 
-    # URL Bindings
-    $length = $rsConfig.ListReservedURLs().Length;
-    if ($length -gt 0)
-    {
-        Write-Output "Removing Existing Bindings..."
-        $rsConfig.ListReservedURLs() | ForEach-Object{
-            For ($i=0; $i -lt $length; $i++) {
-                Write-Output "Removing URL Binding $($_.Application[$i]), $($_.UrlString[$i])";
-                $rsConfig.RemoveURL($_.Application[$i], $_.UrlString[$i], $lcid) | Out-Null
-            }
-        }
+    writeOutput "Registering Font";
+    New-ItemProperty -Name $target -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value $File;
+}
 
-        $length = $rsConfig.ListReservedURLs().Length
-        Write-Output "URL Bindings: $length";
-        if ($length -gt 0)
-        {
-            Write-Error "ERR: bindings should be empty:";
-            $rsConfig.ListReservedURLs() | ForEach-Object{Write-Output $_}
-            exit;
-        }
-    }
+# URL Bindings
+writeTitle -text "URL Bindings ($httpUrl)";
+if (($rsConfig.ListReservedURLs() | ? {$_.UrlString -like ("$($httpUrl.Replace('+','*'))") }).length -gt 0) {
 
-    Write-Output "Setting URL(s)..."
-    # SQL 2014 and newer expect 'ReportServerWebApp'
-    # SQL 2012 and lower expect 'ReportManager'
-    # https://docs.microsoft.com/en-us/sql/reporting-services/breaking-changes-in-sql-server-reporting-services-in-sql-server-2016
-    if ([int]$versionMajor -ge 12)
-    {
-        $vDirectories = @{
-            "ReportServerWebService" = "ReportServer"
-            "ReportServerWebApp" = "Reports"
-        };
-    }
-    else{
-        $vDirectories = @{
-            "ReportServerWebService" = "ReportServer"
-            "ReportManager" = "Reports"
-        };
-    }
+    # done!
+    writeOutput "URL Binding '$httpUrl' already exists!";
 
+} else {
+
+    # define virtual directories
+    $vDirectories = @{
+        "ReportServerWebService" = "ReportServer"
+        "ReportServerWebApp" = "Reports"
+    };
+
+    # process
     foreach ($kv in $vDirectories.GetEnumerator())
     {
         $key = $kv.Name;
         $value = $kv.Value;
-        Write-Output "Processing $key, $value"
-        Write-Output "HTTP: $httpUrl"
+        writeOutput "Adding URL: $($httpUrl)/$value => $key";
 
-        $rsConfig.SetVirtualDirectory($key,$value,$lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR SetVirtualDirectory: FAIL: $($_.Error)" } else{ Write-Output "SetVirtualDirectory: OK"; }}
-        $rsConfig.ReserveURL($key, "$httpUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveURL: FAIL: $($_.Error)" } else{ Write-Output "ReserveURL: OK"; }}
+        $rsConfig.SetVirtualDirectory($key, $value, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR SetVirtualDirectory: FAIL: $($_.Error)" } else{ writeOutput "SetVirtualDirectory: OK"; }}
+        $rsConfig.ReserveURL($key, "$httpUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveURL: FAIL: $($_.Error)" } else{ writeOutput "ReserveURL: OK"; }}
     }
+}
 
-    $secpasswd = ConvertTo-SecureString "$adminUser" -AsPlainText -Force
-    $dbCred = New-Object System.Management.Automation.PSCredential ("$adminPassword", $secpasswd)
+
+writeTitle -text "Basic Auth support";
+$fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
+$fileContents = [System.IO.File]::ReadAllText($FileLocation);
+if ($fileContents.Contains('<AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes>')) {
+
+    # done!
+    writeOutput "Basic Auth already setup!";
+
+} else {
+
+    writeOutput "Locating existing configuration..."; 
     
-    Write-Output "Opening firewall ports..."
-    netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
-    
-    Write-Output "Switching to basic auth...";
-    $fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
+    # find auth tag
     [regex]$regex = "(<Authentication>)([\s\S]*?)(<\/Authentication>)";
-    $m=$regex.Matches([System.IO.File]::ReadAllText($FileLocation));
+    $m = $regex.Matches([System.IO.File]::ReadAllText($FileLocation));
+
+    # replace
     $replace = "<Authentication><AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes><RSWindowsExtendedProtectionLevel>Off</RSWindowsExtendedProtectionLevel><RSWindowsExtendedProtectionScenario>Proxy</RSWindowsExtendedProtectionScenario></Authentication>";
-    [System.IO.File]::ReadAllText($FileLocation).replace($m[0], $replace) | Set-Content $FileLocation;
     
-     Write-Output "Adding $adminUser to dbcreator"
-    $query = "EXEC master..sp_addsrvrolemember @loginame = N'$adminUser', @rolename = N'dbcreator'";
-    Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
-
-    Write-Output "Generating RSS Database..."
-    $result = $rsConfig.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)
-    $query = $result.Script
-    Write-Output "Writing RSS Database..."
-    Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
-    Write-Output "Setting RSS Database..."
-    $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
-
-    Write-Output "Restarting SSRS service..."
-    $rsConfig.SetServiceState($false, $false, $false) | Out-Null
-    $rsConfig.SetServiceState($true, $true, $true) | Out-Null
-    Restart-Service -SERVICENAME SQLServerReportingServices
-    Start-Service -SERVICENAME SQLServerReportingServices
-}
-else{
-    Write-Output "Reporting already set up"
+    # save
+    writeOutput "Saving changes..."; 
+    $fileContents.replace($m[0], $replace) | Set-Content $FileLocation;
 }
 
-if (!(Test-Path "C:\windows\Fonts\code128.ttf"))
-{
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-    $url = "http://github.com/andrewiankidd/AzureArtifacts/raw/master/code128.ttf";
-    $file = "$env:temp\code128.ttf";
-    $target = "C:\windows\Fonts\code128.ttf"
+# Check for $reportUser
+writeTitle -text "Windows ReportUser setup ($reportUser)";
+if ((Get-LocalUser | Where-Object {$_.Name -eq "$reportUser"}).Length -gt 0) {
 
-    Write-Output "Downloading Font"
-    Invoke-WebRequest $url -OutFile $file -UseBasicParsing
-
-    Write-Output "Installing Font"
-    copy-item $file $target -Force;
-
-    Write-Output "Registering Font"
-    New-ItemProperty -Name $target -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value $File
-}
-else{
-    Write-Output "Font Exists!"
+    # done!
+    writeOutput "Windows User '$reportUser' already exists!";
+   
+} else {
+    writeOutput "Creating '$reportUser'";
+	writeOutput "New-LocalUser -Name $reportUser -Description 'SSRS User' -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;"
+	New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;
 }
 
-if ($reportUser -ne $null)
-{
-    # Create local user for SSRS
-    if (!((Get-LocalUser | Where-Object {$_.Name -eq "$reportUser"}).Length -gt 0))
-    {
-        Write-Output "Creating $reportUser";
-	    if ($reportPass -ne $null)
-	    {
-		    write-output "New-LocalUser -Name $reportUser -Description 'SSRS User' -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;"
-		    New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;
-	    }
-        else{
-		    New-LocalUser -Name $reportUser -Description "SSRS User" -NoPassword
-	    }
-    } else{
-        Write-Output "User $reportUser already exists";
-    }
-    
+writeTitle -text "Web ReportUser setup ($reportUser)";
+if (1 -eq 2) {
+
+    # done!
+     writeOutput "Web User '$reportUser' already exists!";
+} else {
+
     # Connect to (localhost) SSRS service
     $ssrs = $null;
-    $start = Get-Date
-    # Try for FIVE minutes
-    Write-Output "Attempting to connect to localhost";
+    $start = Get-Date;
+   
+    writeOutput "Connecting to local report service...";
     while ((!$ssrs) -and ((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds -lt 300)) {
-    	Write-Output "$((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds) Trying to connect..."
+
+         # Try for FIVE minutes
+    	writeOutput "$((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds) Trying to connect...";
         $ssrs = New-WebServiceProxy -Uri "http://localhost/ReportServer/ReportService2010.asmx?wsdl" -Credential (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force))) -ErrorAction SilentlyContinue;
     }
+
     if (!$ssrs) {
-    	Write-Error "Could not connect to SSRS"
+    	Write-Error "Could not connect to SSRS";
     }
-    
+    else {
+         writeOutput "Connected!";
+    }
+
     $namespace = $ssrs.GetType().Namespace;
     $changesMade = $false;
     $policies = $null;
     
     # Get Root Dir Policies
+    writeOutput "Retreiving existing server Policies...";
     $policies = $ssrs.GetPolicies('/', [ref]$true)
 
     # Get new local user
     $reportUser = "$($env:ComputerName)\$($reportUser)"
 
+    writeOutput "Checking Policies for '$reportUser'";
     # Check if user is already assigned to Policy
-    if (!($policies.GroupUserName -contains "$reportUser"))
-    {
+    if (!($policies.GroupUserName -contains "$reportUser")) {
+
+        # Build new policy object
 	    $policy = New-Object -TypeName ($namespace + '.Policy');
 	    $policy.GroupUserName = $reportUser;
 	    $policy.Roles = @();
 	    $policies += $policy;
 	    $changesMade = $true;
-    }
-    else{
+
+    } else {
+
+        # Obtain existing policy
         $policy = $policies.Where({$_.GroupUserName.Contains($reportUser)}, 1);
     }
 
@@ -207,20 +252,34 @@ if ($reportUser -ne $null)
 	    if (($roles.Name -contains $_) -eq $false)
 	    {
 		    #A role for the policy needs to added
-		    Write-Output "Policy doesn't contain specified role ($($_)). Adding.";
+		    writeOutput "Policy doesn't contain specified role ($($_)). Adding.";
 		    $role = New-Object -TypeName ($namespace + '.Role');
 		    $role.Name = $_;
 		    $policy.Roles += $role;
 		    $changesMade = $true;
 	    }
 	    else{
-		    Write-Output "Policy already contains specified role ($($_)).";
+		    writeOutput "Policy already contains specified role ($($_)).";
 	    }
     }
 
     if ($changesMade)
     {
-	    Write-Output "Saving changes to SSRS.";
+	    writeOutput "Saving changes to SSRS.";
 	    $ssrs.SetPolicies('/', $policies);
     }
+
 }
+
+
+# restart services
+writeTitle -text "Finalizing";
+writeOutput "Restarting SSRS service..."
+$rsConfig.SetServiceState($false, $false, $false) | Out-Null
+$rsConfig.SetServiceState($true, $true, $true) | Out-Null
+Restart-Service -SERVICENAME SQLServerReportingServices
+Start-Service -SERVICENAME SQLServerReportingServices
+
+# done
+writeTitle -text "Done!";
+return;
