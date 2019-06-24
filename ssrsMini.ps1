@@ -1,13 +1,13 @@
 param (
     [string]$fqdn,
 
-    [string]$adminUser = "amcs\akidd",
+    [string]$adminUser = "devops",
 
-    [string]$adminPassword = "FeckThis93",
+    [string]$adminPassword,
 
-    [string]$reportUser ="test123",
+    [string]$reportUser = "reportsdbuser",
 
-    [string]$reportPass = "2,sTOCK,gROUP!",
+    [string]$reportPass,
 
     [string]$reportPath = "/",
 
