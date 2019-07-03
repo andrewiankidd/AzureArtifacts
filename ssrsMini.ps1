@@ -16,8 +16,6 @@ param (
     [string]$lcid = "1033"
 )
 
-
-
 function writeTitle($text) {
      Write-Output "`r`n----------------------------------------------------------------`r`n$($text)`r`n----------------------------------------------------------------"
 }
@@ -28,13 +26,12 @@ function writeOutput($text) {
 
 cls
 $ErrorActionPreference = "Stop";
-
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Connect to the instance using SMO
 [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
 $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
 $versionMajor = $sqlServer.VersionMajor;
-
 
 # print some handy vars
 writeTitle -text "Script Initialization";
@@ -44,7 +41,6 @@ writeOutput "adminPassword: $($adminPassword)"
 writeOutput "Instance Name: $($sqlServer.Name)";
 writeOutput "Instance Version: $($sqlServer.Version)";
 writeOutput "Version Major: $versionMajor";
-
 
 # Check for SSRS2017
 writeTitle -text "SSRS2017 Installation";
@@ -66,7 +62,6 @@ if (Test-Path("C:\Program Files\SSRS\Shared Tools\")) {
 writeTitle -text "Connecting to SSRS ReportService";
 writeOutput "Getting WMI object..."
 $rsConfig = Get-WmiObject -namespace "root\Microsoft\SqlServer\ReportServer\RS_SSRS\v14\Admin" -class MSReportServer_ConfigurationSetting
-
 
 # Check for ReportServer database
 writeTitle -text "SSRS2017 ReportServer Database";
@@ -155,7 +150,6 @@ if (($rsConfig.ListReservedURLs() | ? {$_.UrlString -like ("$($httpUrl.Replace('
     }
 }
 
-
 writeTitle -text "Basic Auth support";
 $fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
 $fileContents = [System.IO.File]::ReadAllText($FileLocation);
@@ -179,7 +173,6 @@ if ($fileContents.Contains('<AuthenticationTypes><RSWindowsBasic/></Authenticati
     writeOutput "Saving changes..."; 
     $fileContents.replace($m[0], $replace) | Set-Content $FileLocation;
 }
-
 
 # Check for $reportUser
 writeTitle -text "Windows ReportUser setup ($reportUser)";
@@ -208,7 +201,7 @@ if (1 -eq 2) {
     writeOutput "Connecting to local report service...";
     while ((!$ssrs) -and ((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds -lt 300)) {
 
-         # Try for FIVE minutes
+        # Try for FIVE minutes
     	writeOutput "$((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds) Trying to connect...";
         $ssrs = New-WebServiceProxy -Uri "http://localhost/ReportServer/ReportService2010.asmx?wsdl" -Credential (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force))) -ErrorAction SilentlyContinue;
     }
@@ -270,9 +263,7 @@ if (1 -eq 2) {
 	    writeOutput "Saving changes to SSRS.";
 	    $ssrs.SetPolicies($reportPath, $policies);
     }
-
 }
-
 
 # restart services
 writeTitle -text "Finalizing";
