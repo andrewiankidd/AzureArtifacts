@@ -73,16 +73,17 @@ if ($sqlServer.Settings.LoginMode -eq [Microsoft.SqlServer.Management.SMO.Server
 # Check adminuser
 if (!($sqlServer.Logins | ?{$_.Name -eq ($adminUser)})) {
 
-    # Ensure SQL authentication is enabled
-   
-
     # Add admin user to sql
     $adminLogin = [Microsoft.SqlServer.Management.Smo.Login]::New($sqlServer, $adminUser);
     $adminLogin.LoginType  = [Microsoft.SqlServer.Management.Smo.LoginType]::SqlLogin;
     $adminLogin.PasswordPolicyEnforced  = $False;
     $adminLogin.Create($adminPassword);
-    $sqlServer.Logins.Refresh();
-    $sqlServer.Alter();
+
+    # Save to server
+    $sqlServer.Roles |?{ $_.IsFixedRole -eq $true} | %{ 
+        writeOutput "Adding user '$adminUser' to role '$($_.Name)'";
+        $_.AddMember($adminUser) 
+    };
     Restart-Service -Force MSSQLSERVER;
 }
 
@@ -100,16 +101,12 @@ if($sqlServer.Databases["ReportServer"]) {
 
 } else {
 
-    writeOutput "Adding $adminUser to dbcreator"
-    $query = "EXEC master..sp_addsrvrolemember @loginame = N'$adminUser', @rolename = N'dbcreator'";
-    Invoke-Sqlcmd -Query $query -U $adminUser -P $adminPassword
-
     # create database
     writeOutput "Generating ReportServer Database...";
     $GenerateDatabaseCreationScript = ($rsConfig.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)).Script;
 
     writeOutput "Writing ReportServer Database..."
-    Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript -U "$($env:ComputerName)\$($adminUser)" -P $adminPassword;
+    Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript -U $adminUser -P $adminPassword;
 
     writeOutput "Setting RSS Database..."
     $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
