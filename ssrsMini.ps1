@@ -83,6 +83,7 @@ if (!($sqlServer.Logins | ?{$_.Name -eq ($adminUser)})) {
     $adminLogin.Create($adminPassword);
     $sqlServer.Logins.Refresh();
     $sqlServer.Alter();
+    Restart-Service -Force MSSQLSERVER;
 }
 
 # Configure the SSRS intallation
