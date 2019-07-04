@@ -31,16 +31,13 @@ $ErrorActionPreference = "Stop";
 # Connect to the instance using SMO
 [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
 $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
-$versionMajor = $sqlServer.VersionMajor;
 
 # print some handy vars
 writeTitle -text "Script Initialization";
-writeOutput "fqdn: $($fqdn)";
 writeOutput "adminUser: $($adminUser)";;
 writeOutput "adminPassword: $($adminPassword)"
 writeOutput "Instance Name: $($sqlServer.Name)";
 writeOutput "Instance Version: $($sqlServer.Version)";
-writeOutput "Version Major: $versionMajor";
 
 # Check for SSRS2017
 writeTitle -text "SSRS2017 Installation";
@@ -56,6 +53,36 @@ if (Test-Path("C:\Program Files\SSRS\Shared Tools\")) {
     # install
     writeOutput "Installing SSRS...";
 	Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
+}
+
+
+# Ensure SQL authentication is enabled
+writeTitle -text "Verifying SQL Server LoginMode";
+if ($sqlServer.Settings.LoginMode -eq [Microsoft.SqlServer.Management.SMO.ServerLoginMode]::Mixed) {
+       
+    writeOutput "SQL Login Mode already enabled.";
+} else {
+
+    # Enable mixed auth
+    writeOutput "Enabling SQL Login mode...";
+    $sqlServer.Settings.LoginMode = [Microsoft.SqlServer.Management.SMO.ServerLoginMode]::Mixed;
+    $sqlServer.Alter();
+    Restart-Service -Force MSSQLSERVER;
+}
+
+# Check adminuser
+if (!($sqlServer.Logins | ?{$_.Name -eq ($adminUser)})) {
+
+    # Ensure SQL authentication is enabled
+   
+
+    # Add admin user to sql
+    $adminLogin = [Microsoft.SqlServer.Management.Smo.Login]::New($sqlServer, $adminUser);
+    $adminLogin.LoginType  = [Microsoft.SqlServer.Management.Smo.LoginType]::SqlLogin;
+    $adminLogin.PasswordPolicyEnforced  = $False;
+    $adminLogin.Create($adminPassword);
+    $sqlServer.Logins.Refresh();
+    $sqlServer.Alter();
 }
 
 # Configure the SSRS intallation
@@ -81,7 +108,7 @@ if($sqlServer.Databases["ReportServer"]) {
     $GenerateDatabaseCreationScript = ($rsConfig.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)).Script;
 
     writeOutput "Writing ReportServer Database..."
-    Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript -U $adminUser -P $adminPassword;
+    Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript -U "$($env:ComputerName)\$($adminUser)" -P $adminPassword;
 
     writeOutput "Setting RSS Database..."
     $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
