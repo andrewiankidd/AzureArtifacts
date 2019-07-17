@@ -128,60 +128,52 @@ $fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
 $fileContents = [System.IO.File]::ReadAllText($FileLocation);
 if ($fileContents.Contains('<AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes>')) {
 
-    # done!
+    # Done!
     writeOutput "Basic Auth already setup!";
 
 } else {
 
     writeOutput "Locating existing configuration..."; 
     
-    # find auth tag
+    # Find auth tag
     [regex]$regex = "(<Authentication>)([\s\S]*?)(<\/Authentication>)";
     $m = $regex.Matches([System.IO.File]::ReadAllText($FileLocation));
 
-    # replace
+    # Replace
     $replace = "<Authentication><AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes><RSWindowsExtendedProtectionLevel>Off</RSWindowsExtendedProtectionLevel><RSWindowsExtendedProtectionScenario>Proxy</RSWindowsExtendedProtectionScenario></Authentication>";
     
-    # save
+    # Save
     writeOutput "Saving changes..."; 
     $fileContents.replace($m[0], $replace) | Set-Content $FileLocation;
 }
 
-# Ensure SQL authentication is enabled
-writeTitle -text "Verifying SQL Server LoginMode";
-if ($sqlServer.Settings.LoginMode -eq [Microsoft.SqlServer.Management.SMO.ServerLoginMode]::Mixed) {
-       
-    writeOutput "SQL Login Mode already enabled.";
+# Ensure SQL Mixed Authentication is enabled
+writeTitle -text "Verifying SQL Mixed Authentication Mode.";
+if ((Get-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.MSSQLSERVER\MSSQLServer' -Name "LoginMode").LoginMode -eq 2) {
+
+    # Done!
+    writeOutput "SQL Mixed Authentication Mode already set!";   
 } else {
 
-    # Enable mixed auth
-    writeOutput "Enabling SQL Login mode...";
-    $sqlServer.Settings.LoginMode = [Microsoft.SqlServer.Management.SMO.ServerLoginMode]::Mixed;
-    $sqlServer.Alter();
+    # Set Mixed auth via registry
+    writeOutput "Setting SQL Mixed Authentication Mode";
+    Set-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.MSSQLSERVER\MSSQLServer' -Name "LoginMode" -Value "2";
+    
+    # Restart service
     Restart-Service -Force MSSQLSERVER;
 }
 
 # Check adminuser
 writeTitle -text "Verifying admin user '$($adminUser)' exists";
 if (!($sqlServer.Logins | ?{$_.Name -eq ($adminUser)})) {
-
-    # Add admin user to sql
-    $adminLogin = [Microsoft.SqlServer.Management.Smo.Login]::New($sqlServer, $adminUser);
-    $adminLogin.LoginType  = [Microsoft.SqlServer.Management.Smo.LoginType]::SqlLogin;
-    $adminLogin.PasswordPolicyEnforced  = $False;
-    $adminLogin.Create($adminPassword);
     
-    if ($(if($sqlServer.Logins | ?{$_.Name -eq ($adminUser)}){$true}else{$false})) {
-    	writeOutput "Admin user successfully added!";
-    } else {
-    	writeOutput "Failed to add admin user."
-    }
-
-    # Save to server
-    $sqlServer.Roles |?{ $_.IsFixedRole -eq $true} | %{ 
-        writeOutput "Adding user '$adminUser' to role '$($_.Name)'";
-        $_.AddMember($adminUser) 
-    };
+    # Add User
+    Invoke-SqlCmd "CREATE LOGIN $adminUser WITH PASSWORD = '$adminPassword';";
+    
+    # Add User to sysadmin role
+    Invoke-SqlCmd "ALTER SERVER ROLE sysadmin ADD MEMBER [$adminUser];"
+    
+    # Restart Service
     Restart-Service -Force MSSQLSERVER;
 }
 
@@ -192,19 +184,19 @@ $rsConfig = Get-WmiObject -namespace "root\Microsoft\SqlServer\ReportServer\RS_S
 
 # Check for ReportServer database
 writeTitle -text "SSRS2017 ReportServer Database";
-if($sqlServer.Databases["ReportServer"]) {
-
-    # done
+if(Invoke-SqlCmd "SELECT name FROM master.dbo.sysdatabases" | ?{$_.Name -eq "ReportServer"}) {
+    
+    # Done!
     writeOutput "ReportServer Database already exists!";
 
 } else {
 
-    # create database
+    # Create Database
     writeOutput "Generating ReportServer Database...";
     $GenerateDatabaseCreationScript = ($rsConfig.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)).Script;
 
     writeOutput "Writing ReportServer Database..."
-    Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript -U $adminUser -P $adminPassword;
+    Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript;
 
     writeOutput "Setting RSS Database..."
     $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
@@ -214,7 +206,7 @@ if($sqlServer.Databases["ReportServer"]) {
 writeTitle -text "URL Bindings ($httpUrl)";
 if (($rsConfig.ListReservedURLs() | ? {$_.UrlString -like ("$($httpUrl.Replace('+','*'))") }).length -gt 0) {
 
-    # done!
+    # Done!
     writeOutput "URL Binding '$httpUrl' already exists!";
 
 } else {
