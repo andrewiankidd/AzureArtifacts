@@ -31,6 +31,9 @@ $ErrorActionPreference = "Stop";
 # Sanitize input
 if (!$reportPath.StartsWith("/")){$reportPath = "/$($reportPath)"}
 
+# TODO
+$reportPath = "/";
+
 # Create Credential object
 $credStore = (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force)))
 
