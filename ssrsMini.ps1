@@ -209,6 +209,9 @@ if(Invoke-SqlCmd "SELECT name FROM master.dbo.sysdatabases" | ?{$_.Name -eq "Rep
 
     writeOutput "Setting RSS Database...";
     $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 2, "", "");
+    
+    writeOutput "Restarting SSRS Service...";
+    Restart-Service -SERVICENAME SQLServerReportingServices
 }
 
 # URL Bindings
