@@ -208,7 +208,7 @@ if(Invoke-SqlCmd "SELECT name FROM master.dbo.sysdatabases" | ?{$_.Name -eq "Rep
     Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript;
 
     writeOutput "Setting RSS Database...";
-    $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 2, "", "");
+    $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword);
     
     writeOutput "Restarting SSRS Service...";
     Restart-Service -SERVICENAME SQLServerReportingServices
