@@ -34,6 +34,17 @@ if (!$reportPath.StartsWith("/")){$reportPath = "/$($reportPath)"}
 # Create Credential object
 $credStore = (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force)))
 
+# Azure Custom Script Extensions run as [nt authority\system], this presents problems as we can't access SQLSERVER via SMO in the normal way
+# We can hijack the SQLWriter service to add [nt authority\system] as a server role
+Stop-Service -Name "SQLWriter" -Force;
+Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\services\SQLWriter\" -Name "ImagePath" -Value '"C:\Program Files (x86)\Microsoft SQL Server\Client SDK\ODBC\130\Tools\Binn\SQLCMD.exe" -S . -E -Q "ALTER SERVER ROLE sysadmin ADD MEMBER [nt authority\system];"' -Force;
+Start-Service -Name "SQLWriter";
+
+# Reset the SQLWriter Service
+Stop-Service -Name "SQLWriter" -Force;
+Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\services\SQLWriter\" -Name "ImagePath" -Value '"C:\Program Files\Microsoft SQL Server\90\Shared\sqlwriter.exe"' -Force;
+Start-Service -Name "SQLWriter";
+
 # Connect to the instance using SMO
 [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
 $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
