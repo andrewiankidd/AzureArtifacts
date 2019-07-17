@@ -115,6 +115,30 @@ else{
     New-ItemProperty -Name $target -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value $File;
 }
 
+writeTitle -text "Basic Auth support";
+$fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
+$fileContents = [System.IO.File]::ReadAllText($FileLocation);
+if ($fileContents.Contains('<AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes>')) {
+
+    # done!
+    writeOutput "Basic Auth already setup!";
+
+} else {
+
+    writeOutput "Locating existing configuration..."; 
+    
+    # find auth tag
+    [regex]$regex = "(<Authentication>)([\s\S]*?)(<\/Authentication>)";
+    $m = $regex.Matches([System.IO.File]::ReadAllText($FileLocation));
+
+    # replace
+    $replace = "<Authentication><AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes><RSWindowsExtendedProtectionLevel>Off</RSWindowsExtendedProtectionLevel><RSWindowsExtendedProtectionScenario>Proxy</RSWindowsExtendedProtectionScenario></Authentication>";
+    
+    # save
+    writeOutput "Saving changes..."; 
+    $fileContents.replace($m[0], $replace) | Set-Content $FileLocation;
+}
+
 # Ensure SQL authentication is enabled
 writeTitle -text "Verifying SQL Server LoginMode";
 if ($sqlServer.Settings.LoginMode -eq [Microsoft.SqlServer.Management.SMO.ServerLoginMode]::Mixed) {
@@ -195,30 +219,6 @@ if (($rsConfig.ListReservedURLs() | ? {$_.UrlString -like ("$($httpUrl.Replace('
         $rsConfig.SetVirtualDirectory($key, $value, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR SetVirtualDirectory: FAIL: $($_.Error)" } else{ writeOutput "SetVirtualDirectory: OK"; }}
         $rsConfig.ReserveURL($key, "$httpUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveURL: FAIL: $($_.Error)" } else{ writeOutput "ReserveURL: OK"; }}
     }
-}
-
-writeTitle -text "Basic Auth support";
-$fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
-$fileContents = [System.IO.File]::ReadAllText($FileLocation);
-if ($fileContents.Contains('<AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes>')) {
-
-    # done!
-    writeOutput "Basic Auth already setup!";
-
-} else {
-
-    writeOutput "Locating existing configuration..."; 
-    
-    # find auth tag
-    [regex]$regex = "(<Authentication>)([\s\S]*?)(<\/Authentication>)";
-    $m = $regex.Matches([System.IO.File]::ReadAllText($FileLocation));
-
-    # replace
-    $replace = "<Authentication><AuthenticationTypes><RSWindowsBasic/></AuthenticationTypes><RSWindowsExtendedProtectionLevel>Off</RSWindowsExtendedProtectionLevel><RSWindowsExtendedProtectionScenario>Proxy</RSWindowsExtendedProtectionScenario></Authentication>";
-    
-    # save
-    writeOutput "Saving changes..."; 
-    $fileContents.replace($m[0], $replace) | Set-Content $FileLocation;
 }
 
 writeTitle -text "Web ReportUser setup ($reportUser)";
