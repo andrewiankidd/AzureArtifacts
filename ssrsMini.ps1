@@ -28,6 +28,9 @@ cls
 $ErrorActionPreference = "Continue";
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+# Sanitize input
+if (!$reportPath.StartsWith("/")){$reportPath = "/$($reportPath)"}
+
 # Connect to the instance using SMO
 [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
 $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
