@@ -31,6 +31,9 @@ $ErrorActionPreference = "Stop";
 # Sanitize input
 if (!$reportPath.StartsWith("/")){$reportPath = "/$($reportPath)"}
 
+# Create Credential object
+$credStore = (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force)))
+
 # Connect to the instance using SMO
 [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
 $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
@@ -237,7 +240,7 @@ if (1 -eq 2) {
 
         # Try for FIVE minutes
     	writeOutput "$((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds) Trying to connect...";
-        $ssrs = New-WebServiceProxy -Uri "http://localhost/ReportServer/ReportService2010.asmx?wsdl" -Credential (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force))) -ErrorAction SilentlyContinue;
+        $ssrs = New-WebServiceProxy -Uri "http://localhost/ReportServer/ReportService2010.asmx?wsdl" -Credential $credStore -ErrorAction SilentlyContinue;
     }
 
     if (!$ssrs) {
