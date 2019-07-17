@@ -145,6 +145,7 @@ if ($sqlServer.Settings.LoginMode -eq [Microsoft.SqlServer.Management.SMO.Server
 }
 
 # Check adminuser
+writeTitle -text "Verifying admin user '$($adminUser)' exists";
 if (!($sqlServer.Logins | ?{$_.Name -eq ($adminUser)})) {
 
     # Add admin user to sql
