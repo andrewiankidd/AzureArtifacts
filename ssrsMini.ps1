@@ -38,7 +38,7 @@ $credStore = (New-Object System.Management.Automation.PSCredential ("$adminUser"
 # We can hijack the SQLWriter service to add [nt authority\system] as a server role
 Stop-Service -Name "SQLWriter" -Force;
 Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\services\SQLWriter\" -Name "ImagePath" -Value '"C:\Program Files (x86)\Microsoft SQL Server\Client SDK\ODBC\130\Tools\Binn\SQLCMD.exe" -S . -E -Q "ALTER SERVER ROLE sysadmin ADD MEMBER [nt authority\system];"' -Force;
-Start-Service -Name "SQLWriter";
+Start-Service -Name "SQLWriter" -ErrorAction SilentlyContinue;
 
 # Reset the SQLWriter Service
 Stop-Service -Name "SQLWriter" -Force;
