@@ -181,9 +181,6 @@ if(Invoke-SqlCmd "SELECT name FROM master.dbo.syslogins" | ?{$_.Name -eq "$admin
     
     # Add User to sysadmin role
     Invoke-SqlCmd "ALTER SERVER ROLE sysadmin ADD MEMBER [$adminUser];"
-    
-    # Restart Service
-    Restart-Service -Force MSSQLSERVER;
 }
 
 # Configure the SSRS intallation
