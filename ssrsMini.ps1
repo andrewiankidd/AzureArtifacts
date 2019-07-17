@@ -149,6 +149,12 @@ if (!($sqlServer.Logins | ?{$_.Name -eq ($adminUser)})) {
     $adminLogin.LoginType  = [Microsoft.SqlServer.Management.Smo.LoginType]::SqlLogin;
     $adminLogin.PasswordPolicyEnforced  = $False;
     $adminLogin.Create($adminPassword);
+    
+    if ($(if($sqlServer.Logins | ?{$_.Name -eq ($adminUser)}){$true}else{$false})) {
+    	writeOutput "Admin user successfully added!";
+    } else {
+    	writeOutput "Failed to add admin user."
+    }
 
     # Save to server
     $sqlServer.Roles |?{ $_.IsFixedRole -eq $true} | %{ 
