@@ -141,6 +141,7 @@ if ($sqlServer.Settings.LoginMode -eq [Microsoft.SqlServer.Management.SMO.Server
     # Enable mixed auth
     writeOutput "Enabling SQL Login mode...";
     $sqlServer.Settings.LoginMode = [Microsoft.SqlServer.Management.SMO.ServerLoginMode]::Mixed;
+    $sqlServer.Alter();
     Restart-Service -Force MSSQLSERVER;
 }
 
