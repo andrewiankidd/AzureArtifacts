@@ -48,8 +48,6 @@ Start-Service -Name "SQLWriter";
 # Connect to the instance using SMO
 [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
 $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
-# For Debugging
-$sqlServer | Out-File C:\sqlServer.xml;
 
 # print some handy vars
 writeTitle -text "Script Initialization";
@@ -62,52 +60,56 @@ writeOutput "Instance Version: $($sqlServer.Version)";
 writeTitle -text "SSRS2017 Installation";
 if (Test-Path("C:\Program Files\SSRS\Shared Tools\")) {
 
+    # Done!
     writeOutput "SSRS 2017 already installed!";
 
 } else {
-    # download
+    # Download SSRS
     writeOutput "Downloading SSRS Installer..."
-	Invoke-WebRequest "https://download.microsoft.com/download/E/6/4/E6477A2A-9B58-40F7-8AD6-62BB8491EA78/SQLServerReportingServices.exe" -OutFile "$env:temp\SQLServerReportingServices.exe" -UseBasicParsing;
+    Invoke-WebRequest "https://download.microsoft.com/download/E/6/4/E6477A2A-9B58-40F7-8AD6-62BB8491EA78/SQLServerReportingServices.exe" -OutFile "$env:temp\SQLServerReportingServices.exe" -UseBasicParsing;
 
-    # install
+    # Install quietly
     writeOutput "Installing SSRS...";
-	Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
+    Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
 }
 
 # Check for $reportUser
 writeTitle -text "Windows ReportUser setup ($reportUser)";
 if ((Get-LocalUser | Where-Object {$_.Name -eq "$reportUser"}).Length -gt 0) {
 
-    # done!
+    # Done!
     writeOutput "Windows User '$reportUser' already exists!";
    
 } else {
+
     writeOutput "Creating '$reportUser'";
-	writeOutput "New-LocalUser -Name $reportUser -Description 'SSRS User' -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;"
-	New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;
+    
+    # Create Local (Windows) User
+    writeOutput "New-LocalUser -Name $reportUser -Description 'SSRS User' -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;"
+    New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;
 }
 
 # Check for ReportServer database
 writeTitle -text "ReportServer Firewall Port";
 if((& netsh advfirewall firewall show rule name="SSRS HTTP") | ?{$_.Contains("Allow")}){
 
-     # done
+    # Done!
     writeOutput "ReportServer Firewall Port already exists!";
 
 } else {
 
-    # add firewall rule for ssrs
     writeOutput "Creating ReportServer Firewall Port..."
+    
+    # Add Windows Firewall rule for SSRS
     netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
 }
 
 # Check for ReportServer BarCode font
 writeTitle -text "Barcode Font Installation";
-if (Test-Path "C:\windows\Fonts\code128.ttf")
-{
+if (Test-Path "C:\windows\Fonts\code128.ttf") {
+   # Done!
    writeOutput "Font Exists!"
-}
-else{
+} else{
     
     $url = "http://github.com/andrewiankidd/AzureArtifacts/raw/master/code128.ttf";
     $file = "$env:temp\code128.ttf";
@@ -165,8 +167,12 @@ if ((Get-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL
 
 # Check adminuser
 writeTitle -text "Verifying admin user '$($adminUser)' exists";
-if (!($sqlServer.Logins | ?{$_.Name -eq ($adminUser)})) {
-    
+if(Invoke-SqlCmd "SELECT name FROM master.dbo.syslogins" | ?{$_.Name -eq "$adminUser"}) {
+        
+    # Done!
+    writeOutput "SQL User '$adminUser' already exists!";
+
+} else {
     # Add User
     Invoke-SqlCmd "CREATE LOGIN $adminUser WITH PASSWORD = '$adminPassword';";
     
@@ -232,8 +238,8 @@ if (($rsConfig.ListReservedURLs() | ? {$_.UrlString -like ("$($httpUrl.Replace('
 writeTitle -text "Web ReportUser setup ($reportUser)";
 if (1 -eq 2) {
 
-    # done!
-     writeOutput "Web User '$reportUser' already exists!";
+    # Done!
+    writeOutput "Web User '$reportUser' already exists!";
 } else {
 
     # Connect to (localhost) SSRS service
