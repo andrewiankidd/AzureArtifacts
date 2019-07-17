@@ -254,6 +254,7 @@ if (1 -eq 2) {
 
         # Try for FIVE minutes
     	writeOutput "$((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds) Trying to connect...";
+	Start-Service -SERVICENAME SQLServerReportingServices;
         $ssrs = New-WebServiceProxy -Uri "http://localhost/ReportServer/ReportService2010.asmx?wsdl" -Credential $credStore -ErrorAction SilentlyContinue;
     }
 
