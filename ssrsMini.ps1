@@ -204,11 +204,11 @@ if(Invoke-SqlCmd "SELECT name FROM master.dbo.sysdatabases" | ?{$_.Name -eq "Rep
     writeOutput "Generating ReportServer Database...";
     $GenerateDatabaseCreationScript = ($rsConfig.GenerateDatabaseCreationScript("ReportServer", $lcid, $false)).Script;
 
-    writeOutput "Writing ReportServer Database..."
+    writeOutput "Writing ReportServer Database...";
     Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript;
 
-    writeOutput "Setting RSS Database..."
-    $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
+    writeOutput "Setting RSS Database...";
+    $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 2, "", "");
 }
 
 # URL Bindings
