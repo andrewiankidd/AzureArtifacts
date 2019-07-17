@@ -26,7 +26,7 @@ function writeOutput($text) {
 
 cls
 $ErrorActionPreference = "Stop";
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
 
 # Sanitize input
 if (!$reportPath.StartsWith("/")){$reportPath = "/$($reportPath)"}
@@ -41,6 +41,8 @@ $sqlServer = Invoke-Command -ComputerName localhost -Credential $credStore -Scri
 	[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
 	return new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
 }
+# For Debugging
+$sqlServer | Out-File C:\sqlServer.xml;
 
 # print some handy vars
 writeTitle -text "Script Initialization";
