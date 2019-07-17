@@ -25,7 +25,7 @@ function writeOutput($text) {
 }
 
 cls
-$ErrorActionPreference = "Continue";
+$ErrorActionPreference = "Stop";
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Sanitize input
