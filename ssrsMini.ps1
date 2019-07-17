@@ -36,11 +36,7 @@ $credStore = (New-Object System.Management.Automation.PSCredential ("$adminUser"
 
 # Connect to the instance using SMO
 [System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
-# $sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
-$sqlServer = Invoke-Command -ComputerName localhost -Credential $credStore -ScriptBlock {
-	[System.Reflection.Assembly]::LoadWithPartialName("Microsoft.SqlServer.SMO") | out-null;
-	return new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
-}
+$sqlServer = new-object ("Microsoft.SqlServer.Management.Smo.Server") ".";
 # For Debugging
 $sqlServer | Out-File C:\sqlServer.xml;
 
