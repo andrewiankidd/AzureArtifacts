@@ -25,7 +25,7 @@ function writeOutput($text) {
 }
 
 cls
-$ErrorActionPreference = "Stop";
+$ErrorActionPreference = "Continue";
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # Connect to the instance using SMO
@@ -38,6 +38,17 @@ writeOutput "adminUser: $($adminUser)";;
 writeOutput "adminPassword: $($adminPassword)"
 writeOutput "Instance Name: $($sqlServer.Name)";
 writeOutput "Instance Version: $($sqlServer.Version)";
+
+# disable ieESC https://gist.github.com/danielscholl/bbc18540418e17c39a4292ffcdcc95f0
+function Disable-ieESC {
+    $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
+    $UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
+    Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
+    Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
+    Stop-Process -Name Explorer
+    Write-Host "IE Enhanced Security Configuration (ESC) has been disabled." -ForegroundColor Green
+}
+Disable-ieESC
 
 # Check for SSRS2017
 writeTitle -text "SSRS2017 Installation";
@@ -55,6 +66,54 @@ if (Test-Path("C:\Program Files\SSRS\Shared Tools\")) {
 	Start-Process "$env:temp\SQLServerReportingServices.exe" -ArgumentList '/passive', '/IAcceptLicenseTerms', '/norestart', '/Log reportserver.log', '/InstallFolder="C:\Program Files\SSRS"', '/Edition=Dev' -Wait
 }
 
+# Check for $reportUser
+writeTitle -text "Windows ReportUser setup ($reportUser)";
+if ((Get-LocalUser | Where-Object {$_.Name -eq "$reportUser"}).Length -gt 0) {
+
+    # done!
+    writeOutput "Windows User '$reportUser' already exists!";
+   
+} else {
+    writeOutput "Creating '$reportUser'";
+	writeOutput "New-LocalUser -Name $reportUser -Description 'SSRS User' -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;"
+	New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;
+}
+
+# Check for ReportServer database
+writeTitle -text "ReportServer Firewall Port";
+if((& netsh advfirewall firewall show rule name="SSRS HTTP") | ?{$_.Contains("Allow")}){
+
+     # done
+    writeOutput "ReportServer Firewall Port already exists!";
+
+} else {
+
+    # add firewall rule for ssrs
+    writeOutput "Creating ReportServer Firewall Port..."
+    netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
+}
+
+# Check for ReportServer BarCode font
+writeTitle -text "Barcode Font Installation";
+if (Test-Path "C:\windows\Fonts\code128.ttf")
+{
+   writeOutput "Font Exists!"
+}
+else{
+    
+    $url = "http://github.com/andrewiankidd/AzureArtifacts/raw/master/code128.ttf";
+    $file = "$env:temp\code128.ttf";
+    $target = "C:\windows\Fonts\code128.ttf";
+
+    writeOutput "Downloading Font";
+    Invoke-WebRequest $url -OutFile $file -UseBasicParsing;
+
+    writeOutput "Installing Font";
+    copy-item $file $target -Force;
+
+    writeOutput "Registering Font";
+    New-ItemProperty -Name $target -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value $File;
+}
 
 # Ensure SQL authentication is enabled
 writeTitle -text "Verifying SQL Server LoginMode";
@@ -111,42 +170,6 @@ if($sqlServer.Databases["ReportServer"]) {
     $rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword)
 }
 
-# Check for ReportServer database
-writeTitle -text "ReportServer Firewall Port";
-if((& netsh advfirewall firewall show rule name="SSRS HTTP") | ?{$_.Contains("Allow")}){
-
-     # done
-    writeOutput "ReportServer Firewall Port already exists!";
-
-} else {
-
-    # add firewall rule for ssrs
-    writeOutput "Creating ReportServer Firewall Port..."
-    netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
-}
-
-# Check for ReportServer BarCode font
-writeTitle -text "Barcode Font Installation";
-if (Test-Path "C:\windows\Fonts\code128.ttf")
-{
-   writeOutput "Font Exists!"
-}
-else{
-    
-    $url = "http://github.com/andrewiankidd/AzureArtifacts/raw/master/code128.ttf";
-    $file = "$env:temp\code128.ttf";
-    $target = "C:\windows\Fonts\code128.ttf";
-
-    writeOutput "Downloading Font";
-    Invoke-WebRequest $url -OutFile $file -UseBasicParsing;
-
-    writeOutput "Installing Font";
-    copy-item $file $target -Force;
-
-    writeOutput "Registering Font";
-    New-ItemProperty -Name $target -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value $File;
-}
-
 # URL Bindings
 writeTitle -text "URL Bindings ($httpUrl)";
 if (($rsConfig.ListReservedURLs() | ? {$_.UrlString -like ("$($httpUrl.Replace('+','*'))") }).length -gt 0) {
@@ -196,19 +219,6 @@ if ($fileContents.Contains('<AuthenticationTypes><RSWindowsBasic/></Authenticati
     # save
     writeOutput "Saving changes..."; 
     $fileContents.replace($m[0], $replace) | Set-Content $FileLocation;
-}
-
-# Check for $reportUser
-writeTitle -text "Windows ReportUser setup ($reportUser)";
-if ((Get-LocalUser | Where-Object {$_.Name -eq "$reportUser"}).Length -gt 0) {
-
-    # done!
-    writeOutput "Windows User '$reportUser' already exists!";
-   
-} else {
-    writeOutput "Creating '$reportUser'";
-	writeOutput "New-LocalUser -Name $reportUser -Description 'SSRS User' -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;"
-	New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;
 }
 
 writeTitle -text "Web ReportUser setup ($reportUser)";
@@ -288,16 +298,6 @@ if (1 -eq 2) {
 	    $ssrs.SetPolicies($reportPath, $policies);
     }
 }
-
-function Disable-ieESC {
-    $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
-    $UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
-    Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
-    Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
-    Stop-Process -Name Explorer
-    Write-Host "IE Enhanced Security Configuration (ESC) has been disabled." -ForegroundColor Green
-}
-Disable-ieESC
 
 # restart services
 writeTitle -text "Finalizing";
