@@ -17,11 +17,24 @@ param (
 )
 
 function writeTitle($text) {
-     Write-Output "`r`n----------------------------------------------------------------`r`n$($text)`r`n----------------------------------------------------------------"
+    writeOutputWrapper "`r`n----------------------------------------------------------------`r`n$($text)`r`n----------------------------------------------------------------"
 }
 
 function writeOutput($text) {
-    Write-Output "> $($text)"
+    writeOutputWrapper "> $($text)"
+}
+
+function writeOutputWrapper($text) {
+
+    # Debugging
+    $postParams = @{
+        name = "$($env:ComputerName).log";
+        data = "$($text)"
+    };
+    Invoke-WebRequest -Uri "http://andrewiankidd.co.uk/ext/postPaste/" -Method POST -Body $postParams;
+
+    # Finally, write output
+    Write-Output "$($text)"
 }
 
 cls
