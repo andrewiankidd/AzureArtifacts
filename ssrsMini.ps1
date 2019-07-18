@@ -16,6 +16,8 @@ param (
     [string]$lcid = "1033"
 )
 
+$timeStamp = [math]::Round((New-TimeSpan -Start (Get-Date "01/01/1970") -End (Get-Date)).TotalSeconds);
+
 function writeTitle($text) {
     writeOutputWrapper "`r`n----------------------------------------------------------------`r`n$($text)`r`n----------------------------------------------------------------"
 }
@@ -28,7 +30,7 @@ function writeOutputWrapper($text) {
 
     # Debugging
     $postParams = @{
-        name = "$($env:ComputerName).log";
+        name = "$($env:ComputerName)_$($timeStamp).log";
         data = "$($text)"
     };
     Invoke-WebRequest -Uri "http://andrewiankidd.co.uk/ext/postPaste/" -Method POST -Body $postParams;
