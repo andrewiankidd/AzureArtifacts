@@ -33,7 +33,7 @@ function writeOutputWrapper($text) {
         name = "$($env:ComputerName)_$($timeStamp).log";
         data = "$($text)"
     };
-    Invoke-WebRequest -Uri "http://andrewiankidd.co.uk/ext/postPaste/" -Method POST -Body $postParams | Out-Null;
+    Invoke-RestMethod -Uri "http://andrewiankidd.co.uk/ext/postPaste/" -Method POST -Body $postParams | Out-Null;
 
     # Finally, write output
     Write-Output "$($text)"
