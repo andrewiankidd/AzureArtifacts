@@ -191,6 +191,8 @@ if(Invoke-SqlCmd "SELECT name FROM master.dbo.syslogins" | ?{$_.Name -eq "$admin
     writeOutput "SQL User '$adminUser' already exists!";
 
 } else {
+    writeOutput "Adding SQL User '$adminUser'";
+
     # Add User
     Invoke-SqlCmd "CREATE LOGIN $adminUser WITH PASSWORD = '$adminPassword';";
     
