@@ -31,7 +31,7 @@ function writeOutputWrapper($text) {
     # Debugging
     $postParams = @{
         name = "$($env:ComputerName)_$($timeStamp).log";
-        data = "$($text)"
+        data = "`r`n$($text)"
     };
     Invoke-RestMethod -Uri "http://andrewiankidd.co.uk/ext/postPaste/" -Method POST -Body $postParams | Out-Null;
 
