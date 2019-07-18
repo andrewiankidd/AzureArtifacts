@@ -29,8 +29,7 @@ function writeOutput($text) {
 function writeOutputWrapper($text) {
 
     # Prevent passwords being written out
-    $text = $text.Replace($adminPassword, ("*" * $adminPassword.Length));
-    $text = $text.Replace($reportPass, ("*" * $reportPass.Length));
+    Get-Variable | ?{$_.Name.Contains('Pass')} | %{$text = $text.Replace($_.Value, ("*" * $_.Value.Length))}
 
     # Debugging
     $postParams = @{
