@@ -10,10 +10,16 @@ param (
     [string]$reportPass,
 
     [string]$reportPath = "/",
+    
+    [string]$certificateData,
 
     [string]$httpUrl = "http://+:80",
+    
+    [string]$httpsUrl = "https://+:443",
 
-    [string]$lcid = "1033"
+    [string]$lcid = "1033",
+    
+    [string]$lcid = "443"
 )
 
 $timeStamp = [math]::Round((New-TimeSpan -Start (Get-Date "01/01/1970") -End (Get-Date)).TotalSeconds);
@@ -52,8 +58,15 @@ if (!$reportPath.StartsWith("/")){$reportPath = "/$($reportPath)"}
 # TODO
 $reportPath = "/";
 
+# define virtual directories
+$vDirectories = @{
+    "ReportServerWebService" = "ReportServer"
+    "ReportServerWebApp" = "Reports"
+};
+
 # Create Credential object
-$credStore = (New-Object System.Management.Automation.PSCredential ("$adminUser", (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force)))
+$securePassword = (ConvertTo-SecureString "$adminPassword" -AsPlainText -Force);
+$credStore = (New-Object System.Management.Automation.PSCredential ("$adminUser", $securePassword));
 
 # Azure Custom Script Extensions run as [nt authority\system], this presents problems as we can't access SQLSERVER via SMO in the normal way
 # We can hijack the SQLWriter service to add [nt authority\system] as a server role
@@ -240,12 +253,6 @@ if (($rsConfig.ListReservedURLs() | ? {$_.UrlString -like ("$($httpUrl.Replace('
 
 } else {
 
-    # define virtual directories
-    $vDirectories = @{
-        "ReportServerWebService" = "ReportServer"
-        "ReportServerWebApp" = "Reports"
-    };
-
     # process
     foreach ($kv in $vDirectories.GetEnumerator())
     {
@@ -255,6 +262,39 @@ if (($rsConfig.ListReservedURLs() | ? {$_.UrlString -like ("$($httpUrl.Replace('
 
         $rsConfig.SetVirtualDirectory($key, $value, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR SetVirtualDirectory: FAIL: $($_.Error)" } else{ writeOutput "SetVirtualDirectory: OK"; }}
         $rsConfig.ReserveURL($key, "$httpUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveURL: FAIL: $($_.Error)" } else{ writeOutput "ReserveURL: OK"; }}
+    }
+}
+
+# URL SSL Bindings
+writeTitle -text "SSL Bindings";
+if (($rsConfig.ListSSLCertificateBindings($lcid).Length -gt 0) {
+    # Done!
+    writeOutput "SSL Binding already exists!";
+} ElseIf (!$certificateData){
+    writeOutput "No certificate data provided.";
+} else {
+
+    $certBytes = [System.Convert]::FromBase64String($certificateData);
+    $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection;
+    $certCollection.Import($certBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable);
+
+    $protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12, $adminPassword);
+    $pfxPath = "$($env:Temp)\$($env:ComputerName).pfx";
+    [System.IO.File]::WriteAllBytes($pfxPath, $protectedCertificateBytes);
+    $cert = Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\LocalMachine\my -Password $securePassword;
+    $certHash = ($cert | select -ExpandProperty thumbprint).tolower();
+    
+    # process
+    foreach ($kv in $vDirectories.GetEnumerator())
+    {
+        $key = $kv.Name;
+        $value = $kv.Value;
+        writeOutput "Adding URL: $($httpUrl)/$value => $key";
+	
+	Write-Output "`$rsConfig.CreateSSLCertificateBinding('$key', '$certHash', '0.0.0.0', $sslPort, $lcid)";
+	$rsConfig.RemoveURL($key, "$httpsUrl", $lcid)
+	$rsConfig.ReserveURL($key, "$httpsUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveHTTPSURL: FAIL: $($_.Error)" } else{ Write-Output "ReserveHTTPSURL: OK"; }}
+        $rsConfig.CreateSSLCertificateBinding($key, $certHash, "0.0.0.0", $sslPort, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR CreateSSLCertificateBinding: FAIL: $($_.Error)" } else{ Write-Output "CreateSSLCertificateBinding: OK"; }}
     }
 }
 
