@@ -19,7 +19,7 @@ param (
 
     [string]$lcid = "1033",
     
-    [string]$lcid = "443"
+    [string]$sslPort = "443"
 )
 
 $timeStamp = [math]::Round((New-TimeSpan -Start (Get-Date "01/01/1970") -End (Get-Date)).TotalSeconds);
@@ -267,7 +267,7 @@ if (($rsConfig.ListReservedURLs() | ? {$_.UrlString -like ("$($httpUrl.Replace('
 
 # URL SSL Bindings
 writeTitle -text "SSL Bindings";
-if (($rsConfig.ListSSLCertificateBindings($lcid).Length -gt 0) {
+if ($rsConfig.ListSSLCertificateBindings($lcid).Length -gt 0) {
     # Done!
     writeOutput "SSL Binding already exists!";
 } ElseIf (!$certificateData){
