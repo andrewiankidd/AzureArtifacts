@@ -304,7 +304,7 @@ if ($rsConfig.ListSSLCertificateBindings($lcid).Length -gt 0) {
     {
         $key = $kv.Name;
         $value = $kv.Value;
-        writeOutput "Adding URL: $($httpUrl)/$value => $key";
+        writeOutput "Adding URL: $($httpsUrl)/$value => $key";
 	
 	Write-Output "`$rsConfig.CreateSSLCertificateBinding('$key', '$certHash', '0.0.0.0', $sslPort, $lcid)";
 	$rsConfig.RemoveURL($key, "$httpsUrl", $lcid)
