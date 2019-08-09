@@ -123,7 +123,7 @@ if ((Get-LocalUser | Where-Object {$_.Name -eq "$reportUser"}).Length -gt 0) {
     New-LocalUser -Name $reportUser -Description "SSRS User" -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force) -PasswordNeverExpires -UserMayNotChangePassword;
 }
 
-# Check for ReportServer database
+# Check for ReportServer firewall port
 writeTitle -text "ReportServer Firewall Port";
 if((& netsh advfirewall firewall show rule name="SSRS HTTP") | ?{$_.Contains("Allow")}){
 
@@ -136,6 +136,21 @@ if((& netsh advfirewall firewall show rule name="SSRS HTTP") | ?{$_.Contains("Al
     
     # Add Windows Firewall rule for SSRS
     netsh advfirewall firewall add rule name="SSRS HTTP" dir=in action=allow protocol=TCP localport=80
+}
+
+# Check for ReportServer firewall port
+writeTitle -text "ReportServer HTTPS Firewall Port";
+if((& netsh advfirewall firewall show rule name="SSRS HTTPS") | ?{$_.Contains("Allow")}){
+
+    # Done!
+    writeOutput "ReportServer Firewall Port already exists!";
+
+} else {
+
+    writeOutput "Creating ReportServer Firewall Port..."
+    
+    # Add Windows Firewall rule for SSRS
+    netsh advfirewall firewall add rule name="SSRS HTTPS" dir=in action=allow protocol=TCP localport=443
 }
 
 # Check for ReportServer BarCode font
