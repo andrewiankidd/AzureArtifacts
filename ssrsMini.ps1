@@ -74,7 +74,7 @@ $credStore = (New-Object System.Management.Automation.PSCredential ("$adminUser"
 while ($curAttempts -lt $maxAttempts) {
     try {
     	$curAttempts++;
-    	Write-Output "Attempt #$($curAttempts)/$($maxAttempts):";
+    	writeTitle "Attempt #$($curAttempts)/$($maxAttempts):";
 	
 		# Azure Custom Script Extensions run as [nt authority\system], this presents problems as we can't access SQLSERVER via SMO in the normal way
 		# We can hijack the SQLWriter service to add [nt authority\system] as a server role
