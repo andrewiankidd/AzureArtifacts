@@ -97,6 +97,8 @@ while ($curAttempts -lt $maxAttempts) {
 		writeOutput "adminPassword: $($adminPassword)"
 		writeOutput "Instance Name: $($sqlServer.Name)";
 		writeOutput "Instance Version: $($sqlServer.Version)";
+		writeOutput "reportUser: $($reportUser)";
+		writeOutput "reportPath: $($reportPath)";
 
 		# Check for SSRS2017
 		writeTitle -text "SSRS2017 Installation";
