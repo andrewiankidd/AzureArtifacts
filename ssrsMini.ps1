@@ -307,6 +307,7 @@ while ($curAttempts -lt $maxAttempts) {
 			# Then encrypt + export to PFX file
 			$protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12, $adminPassword);
 			$pfxPath = "$($env:Temp)\$($env:ComputerName).pfx";
+			[System.IO.File]::WriteAllBytes($pfxPath, $protectedCertificateBytes);
 
 			# Build new Collection from pfx
 			$certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection;
