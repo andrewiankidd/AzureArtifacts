@@ -351,7 +351,7 @@ while ($curAttempts -lt $maxAttempts) {
 			}
 
 			# Get new local user
-			$reportUser = "$($env:ComputerName)\$($reportUser)"
+			$localReportUser = "$($env:ComputerName)\$($reportUser)"
 			$namespace = $ssrs.GetType().Namespace;
 			$changesMade = $false;
 			$policies = $null;
@@ -378,13 +378,13 @@ while ($curAttempts -lt $maxAttempts) {
 				writeOutput "Retreiving existing server Policies...";
 				$policies = $ssrs.GetPolicies("$($pathRoot)$($path)", [ref]$true)
 
-				writeOutput "Checking Policies for '$reportUser' on '$($pathRoot)$($path)'";
+				writeOutput "Checking Policies for '$localReportUser' on '$($pathRoot)$($path)'";
 				# Check if user is already assigned to Policy
-				if (!($policies.GroupUserName -contains "$reportUser")) {
+				if (!($policies.GroupUserName -contains "$localReportUser")) {
 
 					# Build new policy object
 					$policy = New-Object -TypeName ($namespace + '.Policy');
-					$policy.GroupUserName = $reportUser;
+					$policy.GroupUserName = $localReportUser;
 					$policy.Roles = @();
 					$policies += $policy;
 					$changesMade = $true;
@@ -392,7 +392,7 @@ while ($curAttempts -lt $maxAttempts) {
 				} else {
 
 					# Obtain existing policy
-					$policy = $policies.Where({$_.GroupUserName.Contains($reportUser)}, 1);
+					$policy = $policies.Where({$_.GroupUserName.Contains($localReportUser)}, 1);
 				}
 
 				$roles = $policy.Roles;
