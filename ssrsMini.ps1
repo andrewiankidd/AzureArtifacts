@@ -369,8 +369,8 @@ while ($curAttempts -lt $maxAttempts) {
                 		writeOutput "Checking for Environment Folder: `"$($pathRoot)$($path)`"...";
 			    	if ($ssrs.GetItemType("$($pathRoot)$($path)") -ne "Folder") {
 					writeOutput "Creating Environment Directory: $path";
-                    			$pathRoot = $(if($pathRoot -eq "/"){"/"}else{$pathRoot.TrimEnd("/")});
-                    			writeOutput "`$ssrs.CreateFolder('$path', '$pathRoot', `$null);"
+                    			$pathRootTrim = $(if($pathRoot -eq "/"){"/"}else{$pathRoot.TrimEnd("/")});
+                    			writeOutput "`$ssrs.CreateFolder('$path', '$pathRootTrim', `$null);"
 				   	$ssrs.CreateFolder($path, $pathRoot, $null);
 			    	};
 				
