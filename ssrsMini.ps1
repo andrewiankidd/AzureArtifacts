@@ -302,12 +302,16 @@ while ($curAttempts -lt $maxAttempts) {
 			$certBytes = [System.Convert]::FromBase64String($certificateData);
 			$certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection;
 			$certCollection.Import($certBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable);
-
-			$protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12, $adminPassword);
-			$pfxPath = "$($env:Temp)\$($env:ComputerName).pfx";
-			[System.IO.File]::WriteAllBytes($pfxPath, $protectedCertificateBytes);
-			$cert = Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\LocalMachine\my -Password $securePassword -Exportable;
-			$certHash = ($cert | select -ExpandProperty thumbprint).tolower();
+			$store = new-object system.security.cryptography.X509Certificates.X509Store -argumentlist "MY", LocalMachine;
+			$store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]"ReadWrite");
+			$certCollection | %{
+				$pfxCert = $_;	
+				writeOutput "Adding Certificate: $($_.Subject)";
+				$store.Add($pfxcert);
+			}
+			
+			# Get thumbprint
+			$certHash = (($certCollection | Select -Last 1) | select -ExpandProperty thumbprint).tolower();
 			
 			# process
 			foreach ($kv in $vDirectories.GetEnumerator())
