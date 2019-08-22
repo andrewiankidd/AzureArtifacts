@@ -350,6 +350,8 @@ while ($curAttempts -lt $maxAttempts) {
 				 writeOutput "Connected!";
 			}
 
+			# Get new local user
+			$reportUser = "$($env:ComputerName)\$($reportUser)"
 			$namespace = $ssrs.GetType().Namespace;
 			$changesMade = $false;
 			$policies = $null;
@@ -371,54 +373,53 @@ while ($curAttempts -lt $maxAttempts) {
                     			writeOutput "`$ssrs.CreateFolder('$path', '$pathRoot', `$null);"
 				   	$ssrs.CreateFolder($path, $pathRoot, $null);
 			    	};
-            		}
+				
+				# Get Root Dir Policies
+				writeOutput "Retreiving existing server Policies...";
+				$policies = $ssrs.GetPolicies("$($pathRoot)$($path)", [ref]$true)
 
-			# Get Root Dir Policies
-			writeOutput "Retreiving existing server Policies...";
-			$policies = $ssrs.GetPolicies($reportPath, [ref]$true)
+				writeOutput "Checking Policies for '$reportUser' on '$($pathRoot)$($path)'";
+				# Check if user is already assigned to Policy
+				if (!($policies.GroupUserName -contains "$reportUser")) {
 
-			# Get new local user
-			$reportUser = "$($env:ComputerName)\$($reportUser)"
+					# Build new policy object
+					$policy = New-Object -TypeName ($namespace + '.Policy');
+					$policy.GroupUserName = $reportUser;
+					$policy.Roles = @();
+					$policies += $policy;
+					$changesMade = $true;
 
-			writeOutput "Checking Policies for '$reportUser'";
-			# Check if user is already assigned to Policy
-			if (!($policies.GroupUserName -contains "$reportUser")) {
+				} else {
 
-				# Build new policy object
-				$policy = New-Object -TypeName ($namespace + '.Policy');
-				$policy.GroupUserName = $reportUser;
-				$policy.Roles = @();
-				$policies += $policy;
-				$changesMade = $true;
+					# Obtain existing policy
+					$policy = $policies.Where({$_.GroupUserName.Contains($reportUser)}, 1);
+				}
 
-			} else {
-
-				# Obtain existing policy
-				$policy = $policies.Where({$_.GroupUserName.Contains($reportUser)}, 1);
-			}
-
-			$roles = $policy.Roles;
-			$requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder");
-			$requiredRoles | % {
+				$roles = $policy.Roles;
+				$requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder");
+				$requiredRoles | % {
 				if (($roles.Name -contains $_) -eq $false)
 				{
-					#A role for the policy needs to added
-					writeOutput "Policy doesn't contain specified role ($($_)). Adding.";
-					$role = New-Object -TypeName ($namespace + '.Role');
-					$role.Name = $_;
-					$policy.Roles += $role;
-					$changesMade = $true;
+						#A role for the policy needs to added
+						writeOutput "Policy doesn't contain specified role ($($_)). Adding.";
+						$role = New-Object -TypeName ($namespace + '.Role');
+						$role.Name = $_;
+						$policy.Roles += $role;
+						$changesMade = $true;
+					}
+					else{
+						writeOutput "Policy already contains specified role ($($_)).";
+					}
 				}
-				else{
-					writeOutput "Policy already contains specified role ($($_)).";
-				}
-			}
 
-			if ($changesMade)
-			{
-				writeOutput "Saving changes to SSRS.";
-				$ssrs.SetPolicies($reportPath, $policies);
-			}
+				if ($changesMade)
+				{
+					writeOutput "Saving changes to SSRS.";
+					$ssrs.SetPolicies("$($pathRoot)$($path)", $policies);
+				}
+            		}
+
+			
 		}
 
 		# restart services
