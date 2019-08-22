@@ -423,8 +423,6 @@ while ($curAttempts -lt $maxAttempts) {
 		# restart services
 		writeTitle -text "Finalizing";
 		writeOutput "Restarting SSRS service..."
-		$rsConfig.SetServiceState($false, $false, $false) | Out-Null
-		$rsConfig.SetServiceState($true, $true, $true) | Out-Null
 		Restart-Service -SERVICENAME SQLServerReportingServices
 		Start-Service -SERVICENAME SQLServerReportingServices
 
