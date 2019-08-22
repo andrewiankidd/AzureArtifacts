@@ -299,14 +299,24 @@ while ($curAttempts -lt $maxAttempts) {
 			writeOutput "No certificate data provided.";
 		} else {
 
+			
+			# First, Import the raw data
 			$certBytes = [System.Convert]::FromBase64String($certificateData);
 			$certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection;
 			$certCollection.Import($certBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable);
+			# Then encrypt + export to PFX file
+			$protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12, $adminPassword);
+			$pfxPath = "$($env:Temp)\$($env:ComputerName).pfx";
+
+			# Build new Collection from pfx
+			$certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection;
+			$certCollection.Import($pfxPath, $adminPassword, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable);
 			$store = new-object system.security.cryptography.X509Certificates.X509Store -argumentlist "MY", LocalMachine;
 			$store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]"ReadWrite");
 			$certCollection | %{
+
 				$pfxCert = $_;	
-				writeOutput "Adding Certificate: $($_.Subject)";
+				Write-Output "Adding Certificate: $($_.Subject)";
 				$store.Add($pfxcert);
 			}
 			
