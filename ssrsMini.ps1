@@ -445,5 +445,3 @@ while ($curAttempts -lt $maxAttempts) {
 # done
 writeTitle -text "Done!";
 return;
-	
-	
