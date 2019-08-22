@@ -316,9 +316,9 @@ while ($curAttempts -lt $maxAttempts) {
 				$value = $kv.Value;
 				writeOutput "Adding URL: $($httpsUrl)/$value => $key";
 			
-			Write-Output "`$rsConfig.CreateSSLCertificateBinding('$key', '$certHash', '0.0.0.0', $sslPort, $lcid)";
-			$rsConfig.RemoveURL($key, "$httpsUrl", $lcid)
-			$rsConfig.ReserveURL($key, "$httpsUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveHTTPSURL: FAIL: $($_.Error)" } else{ Write-Output "ReserveHTTPSURL: OK"; }}
+				Write-Output "`$rsConfig.CreateSSLCertificateBinding('$key', '$certHash', '0.0.0.0', $sslPort, $lcid)";
+				$rsConfig.RemoveURL($key, "$httpsUrl", $lcid)
+				$rsConfig.ReserveURL($key, "$httpsUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveHTTPSURL: FAIL: $($_.Error)" } else{ Write-Output "ReserveHTTPSURL: OK"; }}
 				$rsConfig.CreateSSLCertificateBinding($key, $certHash, "0.0.0.0", $sslPort, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR CreateSSLCertificateBinding: FAIL: $($_.Error)" } else{ Write-Output "CreateSSLCertificateBinding: OK"; }}
 			}
 		}
@@ -339,7 +339,7 @@ while ($curAttempts -lt $maxAttempts) {
 
 				# Try for FIVE minutes
 				writeOutput "$((New-TimeSpan -Start $start -End (Get-Date)).TotalSeconds) Trying to connect...";
-			Start-Service -SERVICENAME SQLServerReportingServices;
+				Start-Service -SERVICENAME SQLServerReportingServices;
 				$ssrs = New-WebServiceProxy -Uri "http://localhost/ReportServer/ReportService2010.asmx?wsdl" -Credential $credStore -ErrorAction SilentlyContinue;
 			}
 
