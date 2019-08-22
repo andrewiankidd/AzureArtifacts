@@ -56,7 +56,7 @@ $ErrorActionPreference = "Stop";
 if (!$reportPath.StartsWith("/")){$reportPath = "/$($reportPath)"}
 
 # TODO
-#$reportPath = "/";
+$reportPath = "/";
 
 # define virtual directories
 $vDirectories = @{
