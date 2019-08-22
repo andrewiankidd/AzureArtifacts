@@ -398,8 +398,8 @@ while ($curAttempts -lt $maxAttempts) {
 				$roles = $policy.Roles;
 				$requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder");
 				$requiredRoles | % {
-				if (($roles.Name -contains $_) -eq $false)
-				{
+					if (($roles.Name -contains $_) -eq $false)
+					{
 						#A role for the policy needs to added
 						writeOutput "Policy doesn't contain specified role ($($_)). Adding.";
 						$role = New-Object -TypeName ($namespace + '.Role');
