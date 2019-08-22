@@ -306,7 +306,7 @@ while ($curAttempts -lt $maxAttempts) {
 			$protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12, $adminPassword);
 			$pfxPath = "$($env:Temp)\$($env:ComputerName).pfx";
 			[System.IO.File]::WriteAllBytes($pfxPath, $protectedCertificateBytes);
-			$cert = Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\LocalMachine\my -Password $securePassword;
+			$cert = Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\LocalMachine\my -Password $securePassword -Exportable;
 			$certHash = ($cert | select -ExpandProperty thumbprint).tolower();
 			
 			# process
