@@ -354,27 +354,25 @@ while ($curAttempts -lt $maxAttempts) {
 			$changesMade = $false;
 			$policies = $null;
 
-            # Check Environment path exists
-            $segments = $reportPath.split('/',[System.StringSplitOptions]::RemoveEmptyEntries);
-            $segments | %{
+            		# Check Environment path exists
+            		$segments = $reportPath.split('/',[System.StringSplitOptions]::RemoveEmptyEntries);
+            		$segments | %{
 
-                $index = $segments.IndexOf($_);
-                $path = $segments[$index];
-                $pathRoot = if ($index -eq 0){"/"}else {"/" + [system.String]::Join("/", $segments[0..$($index-1)]) + "/"}
-                Write-Output "path: $path"
-                Write-Output "pathRoot: $pathRoot"
+                		$index = $segments.IndexOf($_);
+                		$path = $segments[$index];
+                		$pathRoot = if ($index -eq 0){"/"}else {"/" + [system.String]::Join("/", $segments[0..$($index-1)]) + "/"}
+                		writeOutput "path: $path"
+                		writeOutput "pathRoot: $pathRoot"
 
-                write-Output "Checking for Environment Folder: `"$($pathRoot)$($path)`"...";
-			    if ($ssrs.GetItemType("$($pathRoot)$($path)") -ne "Folder") {
-				    write-Output "Creating Environment Directory: $path";
-                    $pathRoot = $(if($pathRoot -eq "/"){"/"}else{$pathRoot.TrimEnd("/")});
-                    write-output "`$ssrs.CreateFolder('$path', '$pathRoot', `$null);"
-				    $ssrs.CreateFolder($path, $pathRoot, $null);
-			    };
-            }
+                		writeOutput "Checking for Environment Folder: `"$($pathRoot)$($path)`"...";
+			    	if ($ssrs.GetItemType("$($pathRoot)$($path)") -ne "Folder") {
+					writeOutput "Creating Environment Directory: $path";
+                    			$pathRoot = $(if($pathRoot -eq "/"){"/"}else{$pathRoot.TrimEnd("/")});
+                    			writeOutput "`$ssrs.CreateFolder('$path', '$pathRoot', `$null);"
+				   	$ssrs.CreateFolder($path, $pathRoot, $null);
+			    	};
+            		}
 
-			
-			
 			# Get Root Dir Policies
 			writeOutput "Retreiving existing server Policies...";
 			$policies = $ssrs.GetPolicies($reportPath, [ref]$true)
