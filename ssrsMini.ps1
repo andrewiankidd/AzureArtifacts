@@ -371,7 +371,7 @@ while ($curAttempts -lt $maxAttempts) {
 					writeOutput "Creating Environment Directory: $path";
                     			$pathRootTrim = $(if($pathRoot -eq "/"){"/"}else{$pathRoot.TrimEnd("/")});
                     			writeOutput "`$ssrs.CreateFolder('$path', '$pathRootTrim', `$null);"
-				   	$ssrs.CreateFolder($path, $pathRoot, $null);
+				   	$ssrs.CreateFolder($path, $pathRootTrim, $null);
 			    	};
 				
 				# Get Root Dir Policies
