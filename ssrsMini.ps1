@@ -411,15 +411,13 @@ while ($curAttempts -lt $maxAttempts) {
 						writeOutput "Policy already contains specified role ($($_)).";
 					}
 				}
-
-				if ($changesMade)
-				{
-					writeOutput "Saving changes to SSRS.";
-					$ssrs.SetPolicies("$($pathRoot)$($path)", $policies);
-				}
             		}
 
-			
+			if ($changesMade)
+			{
+				writeOutput "Saving changes to SSRS.";
+				$ssrs.SetPolicies("$($pathRoot)$($path)", $policies);
+			}	
 		}
 
 		# restart services
