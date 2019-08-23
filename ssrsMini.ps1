@@ -54,6 +54,7 @@ $ErrorActionPreference = "Stop";
 
 # Sanitize input
 if (!$reportPath.StartsWith("/")){$reportPath = "/$($reportPath)"}
+$reportUser = $reportUser.substring(0, [System.Math]::Min(20, $reportUser.Length))
 
 # TODO
 #$reportPath = "/";
