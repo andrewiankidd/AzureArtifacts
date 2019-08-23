@@ -370,13 +370,14 @@ while ($curAttempts -lt $maxAttempts) {
 			# Get new local user
 			$localReportUser = "$($env:ComputerName)\$($reportUser)"
 			$namespace = $ssrs.GetType().Namespace;
-			$changesMade = $false;
+			
 			$policies = $null;
 
             		# Check Environment path exists
             		$segments = $reportPath.split('/',[System.StringSplitOptions]::RemoveEmptyEntries);
             		$segments | %{
 
+				$changesMade = $false;
                 		$index = $segments.IndexOf($_);
                 		$path = $segments[$index];
                 		$pathRoot = if ($index -eq 0){"/"}else {"/" + [system.String]::Join("/", $segments[0..$($index-1)]) + "/"}
@@ -428,13 +429,15 @@ while ($curAttempts -lt $maxAttempts) {
 						writeOutput "Policy already contains specified role ($($_)).";
 					}
 				}
+				
+				if ($changesMade)
+				{
+					writeOutput "Saving changes to SSRS.";
+					$ssrs.SetPolicies("$($pathRoot)$($path)", $policies);
+				}	
             		}
 
-			if ($changesMade)
-			{
-				writeOutput "Saving changes to SSRS.";
-				$ssrs.SetPolicies("$($pathRoot)$($path)", $policies);
-			}	
+			
 		}
 
 		# restart services
