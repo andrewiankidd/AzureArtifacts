@@ -370,14 +370,12 @@ while ($curAttempts -lt $maxAttempts) {
 			# Get new local user
 			$localReportUser = "$($env:ComputerName)\$($reportUser)"
 			$namespace = $ssrs.GetType().Namespace;
-			
+			$changesMade = $false;	
 			$policies = $null;
 
             		# Check Environment path exists
             		$segments = $reportPath.split('/',[System.StringSplitOptions]::RemoveEmptyEntries);
             		$segments | %{
-
-				$changesMade = $false;
                 		$index = $segments.IndexOf($_);
                 		$path = $segments[$index];
                 		$pathRoot = if ($index -eq 0){"/"}else {"/" + [system.String]::Join("/", $segments[0..$($index-1)]) + "/"}
@@ -390,52 +388,53 @@ while ($curAttempts -lt $maxAttempts) {
                     			$pathRootTrim = $(if($pathRoot -eq "/"){"/"}else{$pathRoot.TrimEnd("/")});
                     			writeOutput "`$ssrs.CreateFolder('$path', '$pathRootTrim', `$null);"
 				   	$ssrs.CreateFolder($path, $pathRootTrim, $null);
-			    	};
-				
-				# Get Root Dir Policies
-				writeOutput "Retreiving existing server Policies...";
-				$policies = $ssrs.GetPolicies("$($pathRoot)$($path)", [ref]$true)
-
-				writeOutput "Checking Policies for '$localReportUser' on '$($pathRoot)$($path)'";
-				# Check if user is already assigned to Policy
-				if (!($policies.GroupUserName -contains "$localReportUser")) {
-
-					# Build new policy object
-					$policy = New-Object -TypeName ($namespace + '.Policy');
-					$policy.GroupUserName = $localReportUser;
-					$policy.Roles = @();
-					$policies += $policy;
-					$changesMade = $true;
-
-				} else {
-
-					# Obtain existing policy
-					$policy = $policies.Where({$_.GroupUserName.Contains($localReportUser)}, 1);
-				}
-
-				$roles = $policy.Roles;
-				$requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder");
-				$requiredRoles | % {
-					if (($roles.Name -contains $_) -eq $false)
-					{
-						#A role for the policy needs to added
-						writeOutput "Policy doesn't contain specified role ($($_)). Adding.";
-						$role = New-Object -TypeName ($namespace + '.Role');
-						$role.Name = $_;
-						$policy.Roles += $role;
-						$changesMade = $true;
-					}
-					else{
-						writeOutput "Policy already contains specified role ($($_)).";
-					}
-				}
-				
-				if ($changesMade)
-				{
-					writeOutput "Saving changes to SSRS.";
-					$ssrs.SetPolicies("$($pathRoot)$($path)", $policies);
-				}	
+			    	};		
             		}
+			
+			
+			# Get Root Dir Policies
+			writeOutput "Retreiving existing server Policies...";
+			$policies = $ssrs.GetPolicies("$($reportPath)", [ref]$true)
+
+			writeOutput "Checking Policies for '$localReportUser' on '$($reportPath)'";
+			# Check if user is already assigned to Policy
+			if (!($policies.GroupUserName -contains "$localReportUser")) {
+
+				# Build new policy object
+				$policy = New-Object -TypeName ($namespace + '.Policy');
+				$policy.GroupUserName = $localReportUser;
+				$policy.Roles = @();
+				$policies += $policy;
+				$changesMade = $true;
+
+			} else {
+
+				# Obtain existing policy
+				$policy = $policies.Where({$_.GroupUserName.Contains($localReportUser)}, 1);
+			}
+
+			$roles = $policy.Roles;
+			$requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder");
+			$requiredRoles | % {
+				if (($roles.Name -contains $_) -eq $false)
+				{
+					#A role for the policy needs to added
+					writeOutput "Policy doesn't contain specified role ($($_)). Adding.";
+					$role = New-Object -TypeName ($namespace + '.Role');
+					$role.Name = $_;
+					$policy.Roles += $role;
+					$changesMade = $true;
+				}
+				else{
+					writeOutput "Policy already contains specified role ($($_)).";
+				}
+			}
+
+			if ($changesMade)
+			{
+				writeOutput "Saving changes to SSRS.";
+				$ssrs.SetPolicies("$($reportPath)", $policies);
+			}
 
 			
 		}
