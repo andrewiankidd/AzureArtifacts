@@ -432,7 +432,7 @@ while ($curAttempts -lt $maxAttempts) {
 
 			if ($changesMade)
 			{
-				writeOutput "Saving changes to SSRS.";
+				writeOutput "Saving changes to SSRS: $($reportPath)";
 				$ssrs.SetPolicies("$($reportPath)", $policies);
 			}
 
