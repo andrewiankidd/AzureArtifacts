@@ -370,7 +370,6 @@ while ($curAttempts -lt $maxAttempts) {
 			# Get new local user
 			$localReportUser = "$($env:ComputerName)\$($reportUser)"
 			$namespace = $ssrs.GetType().Namespace;
-			$changesMade = $false;	
 			$policies = $null;
 
             		# Check Environment path exists
@@ -395,7 +394,8 @@ while ($curAttempts -lt $maxAttempts) {
 			# Get Root Dir Policies
 			writeOutput "Retreiving existing server Policies...";
 			$policies = $ssrs.GetPolicies("$($reportPath)", [ref]$true)
-
+			$changesMade = $false;	
+			
 			writeOutput "Checking Policies for '$localReportUser' on '$($reportPath)'";
 			# Check if user is already assigned to Policy
 			if (!($policies.GroupUserName -contains "$localReportUser")) {
