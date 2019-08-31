@@ -315,7 +315,7 @@ while ($curAttempts -lt $maxAttempts) {
 			$certCollection | %{
 
 				$pfxCert = $_;	
-				Write-Output "Adding Certificate: $($_.Subject)";
+				writeOutput "Adding Certificate: $($_.Subject)";
 				$store.Add($pfxcert);
 			}
 			
@@ -329,10 +329,10 @@ while ($curAttempts -lt $maxAttempts) {
 				$value = $kv.Value;
 				writeOutput "Adding URL: $($httpsUrl)/$value => $key";
 			
-				Write-Output "`$rsConfig.CreateSSLCertificateBinding('$key', '$certHash', '0.0.0.0', $sslPort, $lcid)";
+				writeOutput "`$rsConfig.CreateSSLCertificateBinding('$key', '$certHash', '0.0.0.0', $sslPort, $lcid)";
 				$rsConfig.RemoveURL($key, "$httpsUrl", $lcid)
-				$rsConfig.ReserveURL($key, "$httpsUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveHTTPSURL: FAIL: $($_.Error)" } else{ Write-Output "ReserveHTTPSURL: OK"; }}
-				$rsConfig.CreateSSLCertificateBinding($key, $certHash, "0.0.0.0", $sslPort, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR CreateSSLCertificateBinding: FAIL: $($_.Error)" } else{ Write-Output "CreateSSLCertificateBinding: OK"; }}
+				$rsConfig.ReserveURL($key, "$httpsUrl", $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR ReserveHTTPSURL: FAIL: $($_.Error)" } else{ writeOutput "ReserveHTTPSURL: OK"; }}
+				$rsConfig.CreateSSLCertificateBinding($key, $certHash, "0.0.0.0", $sslPort, $lcid) | ForEach-Object{ if ($_.HRESULT -ne 0) { Write-Error "ERR CreateSSLCertificateBinding: FAIL: $($_.Error)" } else{ writeOutput "CreateSSLCertificateBinding: OK"; }}
 			}
 		}
 
