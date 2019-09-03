@@ -208,7 +208,7 @@ while ($curAttempts -lt $maxAttempts) {
 
 		# Ensure SQL Mixed Authentication is enabled
 		writeTitle -text "Verifying SQL Mixed Authentication Mode.";
-		if ((Get-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.MSSQLSERVER\MSSQLServer' -Name "LoginMode").LoginMode -eq 2) {
+		if (((Get-ItemProperty -path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.MSSQLSERVER\MSSQLServer' -Name "LoginMode").LoginMode -eq 2) -or !(Test-Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.MSSQLSERVER\MSSQLServer')) {
 
 			# Done!
 			writeOutput "SQL Mixed Authentication Mode already set!";   
