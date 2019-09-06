@@ -261,7 +261,7 @@ while ($curAttempts -lt $maxAttempts) {
 			Invoke-Sqlcmd -Query $GenerateDatabaseCreationScript;
 
 			writeOutput "Setting RSS Database...";
-			$rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $adminUser, $adminPassword);
+			$rsConfig.SetDatabaseConnection($env:computername, "ReportServer", 1, $reportUser, $reportPath);
 			
 			writeOutput "Restarting SSRS Service...";
 			Restart-Service -SERVICENAME SQLServerReportingServices
