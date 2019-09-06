@@ -124,7 +124,7 @@ while ($curAttempts -lt $maxAttempts) {
 			
 			writeOutput "Refreshing user password...";
 			$localAccount = Get-LocalUser -Name $reportUser;
-			$localAccount | Set-LocalUser -Password $reportPass;	   
+			$localAccount | Set-LocalUser -Password (ConvertTo-SecureString $reportPass -AsPlainText -Force);	   
 		} else {
 
 			writeOutput "Creating '$reportUser'";
