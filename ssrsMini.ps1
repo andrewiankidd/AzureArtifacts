@@ -121,7 +121,10 @@ while ($curAttempts -lt $maxAttempts) {
 
 			# Done!
 			writeOutput "Windows User '$reportUser' already exists!";
-		   
+			
+			writeOutput "Refreshing user password...";
+			$localAccount = Get-LocalUser -Name $reportUser;
+			$localAccount | Set-LocalUser -Password $reportPass;	   
 		} else {
 
 			writeOutput "Creating '$reportUser'";
