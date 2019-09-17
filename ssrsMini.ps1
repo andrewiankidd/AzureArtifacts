@@ -211,13 +211,13 @@ while ($curAttempts -lt $maxAttempts) {
 		}
 		
 		# sets code execution policy so we can execute barcodes
-		writeTitle -text "Code execution support";
+		writeTitle -text "Report Code execution support";
 		$fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rssrvpolicy.config";
 		$fileContents = [System.IO.File]::ReadAllText($FileLocation);
 		if ($fileContents -match 'PermissionSetName="(FullTrust)"\r\n +Name="Report_Expressions_Default_Permissions"') {
 
 			# Done!
-			writeOutput "Basic Auth already setup!";
+			writeOutput "Report Code execution already setup!";
 
 		} else {
 
