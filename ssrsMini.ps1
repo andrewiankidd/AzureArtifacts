@@ -164,27 +164,6 @@ while ($curAttempts -lt $maxAttempts) {
 			netsh advfirewall firewall add rule name="SSRS HTTPS" dir=in action=allow protocol=TCP localport=443
 		}
 
-		# Check for ReportServer BarCode font
-		writeTitle -text "Barcode Font Installation";
-		if (Test-Path "C:\windows\Fonts\code128.ttf") {
-		   # Done!
-		   writeOutput "Font Exists!"
-		} else{
-			
-			$url = "http://github.com/andrewiankidd/AzureArtifacts/raw/master/code128.ttf";
-			$file = "$env:temp\code128.ttf";
-			$target = "C:\windows\Fonts\code128.ttf";
-
-			writeOutput "Downloading Font";
-			Invoke-WebRequest $url -OutFile $file -UseBasicParsing;
-
-			writeOutput "Installing Font";
-			copy-item $file $target -Force;
-
-			writeOutput "Registering Font";
-			New-ItemProperty -Name $target -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value $File;
-		}
-
 		# rs basic auth (does this affect https?)
 		writeTitle -text "Basic Auth support";
 		$fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
@@ -211,6 +190,8 @@ while ($curAttempts -lt $maxAttempts) {
 		}
 		
 		# sets code execution policy so we can execute barcodes
+		# For usage see below
+		# https://gist.github.com/andrewiankidd/644b128770d65481714aa9720a3f6843
 		writeTitle -text "Report Code execution support";
 		$fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rssrvpolicy.config";
 		$fileContents = [System.IO.File]::ReadAllText($FileLocation);
