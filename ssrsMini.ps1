@@ -185,6 +185,7 @@ while ($curAttempts -lt $maxAttempts) {
 			New-ItemProperty -Name $target -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Fonts" -PropertyType string -Value $File;
 		}
 
+		# rs basic auth (does this affect https?)
 		writeTitle -text "Basic Auth support";
 		$fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rsreportserver.config";
 		$fileContents = [System.IO.File]::ReadAllText($FileLocation);
@@ -207,6 +208,26 @@ while ($curAttempts -lt $maxAttempts) {
 			# Save
 			writeOutput "Saving changes..."; 
 			$fileContents.replace($m[0], $replace) | Set-Content $FileLocation;
+		}
+		
+		# sets code execution policy so we can execute barcodes
+		writeTitle -text "Code execution support";
+		$fileLocation = "C:\Program Files\SSRS\SSRS\ReportServer\rssrvpolicy.config";
+		$fileContents = [System.IO.File]::ReadAllText($FileLocation);
+		if ($fileContents -match 'PermissionSetName="(FullTrust)"\r\n +Name="Report_Expressions_Default_Permissions"') {
+
+			# Done!
+			writeOutput "Basic Auth already setup!";
+
+		} else {
+
+			writeOutput "Updating existing configuration..."; 
+			
+			$fileContents = $fileContents -replace 'PermissionSetName="(Execution)"\r\n +Name="Report_Expressions_Default_Permissions"', "PermissionSetName=`"FullTrust`"`r`n                    Name=`"Report_Expressions_Default_Permissions`"";
+			
+			# Save
+			writeOutput "Saving changes..."; 
+			$fileContents | Set-Content $FileLocation;
 		}
 
 		# Ensure SQL Mixed Authentication is enabled
