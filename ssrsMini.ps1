@@ -1,5 +1,5 @@
 param (
-    [string]$fqdn,
+    [string]$fqdn = "obsolete, ignore",
 
     [string]$adminUser = "devops",
 
