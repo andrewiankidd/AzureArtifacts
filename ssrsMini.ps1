@@ -403,6 +403,7 @@ while ($curAttempts -lt $maxAttempts) {
 			if (!($policies.GroupUserName -contains "$localReportUser")) {
 
 				# Build new policy object
+				writeOutput " > Creating";
 				$policy = New-Object -TypeName ($namespace + '.Policy');
 				$policy.GroupUserName = $localReportUser;
 				$policy.Roles = @();
@@ -412,6 +413,7 @@ while ($curAttempts -lt $maxAttempts) {
 			} else {
 
 				# Obtain existing policy
+				writeOutput " > Exists!";
 				$policy = $policies.Where({$_.GroupUserName.Contains($localReportUser)}, 1);
 			}
 
@@ -419,8 +421,8 @@ while ($curAttempts -lt $maxAttempts) {
 			$requiredRoles = @("Browser", "Content Manager", "My Reports", "Publisher", "Report Builder");
 			$requiredRoles | % {
 				if (($roles.Name -contains $_) -eq $false)
-				{
-					#A role for the policy needs to added
+				{		
+					# A role for the policy needs to added
 					writeOutput "Policy doesn't contain specified role ($($_)). Adding.";
 					$role = New-Object -TypeName ($namespace + '.Role');
 					$role.Name = $_;
@@ -440,12 +442,19 @@ while ($curAttempts -lt $maxAttempts) {
 
 			
 		}
-
+		
+		
 		# restart services
 		writeTitle -text "Finalizing";
-		writeOutput "Restarting SSRS service..."
-		Restart-Service -SERVICENAME SQLServerReportingServices
-		Start-Service -SERVICENAME SQLServerReportingServices
+		
+		writeOutput "Changes Made?: $(if($changesMade){'True'}else{'False'})";
+		if ($changesMade) {		
+			writeOutput "Restarting SSRS service...";
+			Restart-Service -SERVICENAME SQLServerReportingServices;
+			Start-Service -SERVICENAME SQLServerReportingServices;		
+		} else {
+			writeOutput "No changes to save!";
+		}
 
 		break;
 	} catch {
