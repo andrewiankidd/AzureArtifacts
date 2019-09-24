@@ -403,7 +403,7 @@ while ($curAttempts -lt $maxAttempts) {
 			if (!($policies.GroupUserName -contains "$localReportUser")) {
 
 				# Build new policy object
-				writeOutput " > Creating";
+				writeOutput "Creating policy for user.";
 				$policy = New-Object -TypeName ($namespace + '.Policy');
 				$policy.GroupUserName = $localReportUser;
 				$policy.Roles = @();
@@ -413,7 +413,7 @@ while ($curAttempts -lt $maxAttempts) {
 			} else {
 
 				# Obtain existing policy
-				writeOutput " > Exists!";
+				writeOutput "Policy already exists for user.";
 				$policy = $policies.Where({$_.GroupUserName.Contains($localReportUser)}, 1);
 			}
 
